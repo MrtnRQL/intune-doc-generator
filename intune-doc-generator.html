@@ -529,39 +529,106 @@
         }
 
         function extractPackageName() {
+            // First check for PSAppDeployToolkit Deploy-Application.ps1
+            const deployScript = analyzedData.scripts.find(s => 
+                s.name.toLowerCase() === 'deploy-application.ps1'
+            );
+            
+            if (deployScript) {
+                // Try to extract app name from PSADT variables
+                const appNameMatch = deployScript.content.match(/\$appName\s*=\s*["']([^"']+)["']/i);
+                if (appNameMatch) return appNameMatch[1];
+                
+                const appVendorMatch = deployScript.content.match(/\$appVendor\s*=\s*["']([^"']+)["']/i);
+                const appNameAltMatch = deployScript.content.match(/\$appName\s*=\s*["']([^"']+)["']/i);
+                if (appVendorMatch && appNameAltMatch) {
+                    return `${appVendorMatch[1]} ${appNameAltMatch[1]}`;
+                }
+            }
+            
+            // Standard detection for other scripts
             for (const s of analyzedData.scripts) {
                 const m = s.name.match(/(?:Install|Uninstall|Detect)-(.+?)\.ps1/i);
                 if (m) return m[1].replace(/([A-Z])/g, ' $1').trim();
             }
+            
             if (selectedFolderPath) return selectedFolderPath.replace(/[-_]/g, ' ');
             return analyzedData.installers[0]?.name.replace(/\.(exe|msi)$/i, '').replace(/[-_]/g, ' ') || '';
         }
 
         function detectPackageType() {
             const names = analyzedData.scripts.map(s => s.name.toLowerCase()).join(' ');
+            
+            // Check for PSAppDeployToolkit
+            if (names.includes('deploy-application.ps1') || 
+                analyzedData.scripts.some(s => s.content.includes('PSAppDeployToolkit'))) {
+                return 'Application Installation Package';
+            }
+            
             if (names.includes('printer')) return 'Printer Installation Script (Win32 Intune Package)';
             if (analyzedData.installers.some(f => f.name.endsWith('.msi'))) return 'Application Installation Package';
             return 'Win32 Intune Package';
         }
 
         function extractVersion() {
+            // Check for PSAppDeployToolkit version variable
+            const deployScript = analyzedData.scripts.find(s => 
+                s.name.toLowerCase() === 'deploy-application.ps1'
+            );
+            
+            if (deployScript) {
+                const appVersionMatch = deployScript.content.match(/\$appVersion\s*=\s*["']([^"']+)["']/i);
+                if (appVersionMatch) return appVersionMatch[1];
+            }
+            
+            // Standard version detection
             for (const s of analyzedData.scripts) {
-                const m = s.content.match(/\$version\s*=\s*["']([^"']+)["']/i) || s.content.match(/#\s*Version:?\s*([0-9.]+)/i);
+                const m = s.content.match(/\$version\s*=\s*["']([^"']+)["']/i) || 
+                         s.content.match(/#\s*Version:?\s*([0-9.]+)/i);
                 if (m) return m[1];
             }
             return '1.0';
         }
 
         function extractDescription(type) {
+            // Check for PSAppDeployToolkit description
+            const deployScript = analyzedData.scripts.find(s => 
+                s.name.toLowerCase() === 'deploy-application.ps1'
+            );
+            
+            if (deployScript) {
+                // Try to extract from .SYNOPSIS or comments
+                const synopsisMatch = deployScript.content.match(/\.SYNOPSIS\s+(.+?)(?:\.|\.DESCRIPTION|\.PARAMETER|\n\n)/is);
+                if (synopsisMatch) return synopsisMatch[1].trim().replace(/\s+/g, ' ');
+                
+                const descMatch = deployScript.content.match(/#\s*This script performs the installation.+/i);
+                if (descMatch) return descMatch[0].replace(/^#\s*/, '');
+            }
+            
+            // Standard description detection
             for (const s of analyzedData.scripts) {
                 const m = s.content.match(/\.SYNOPSIS\s+(.+?)(?:\.|\.DESCRIPTION|\n\n)/is);
                 if (m) return m[1].trim().replace(/\s+/g, ' ');
             }
+            
             if (type.includes('Printer')) return 'Installs network printer including:\n- Creation of TCP/IP port\n- Installation of required print driver\n- Creation of the printer object';
             return '';
         }
 
         function extractCommands() {
+            // Check for PSAppDeployToolkit
+            const deployScript = analyzedData.scripts.find(s => 
+                s.name.toLowerCase() === 'deploy-application.ps1'
+            );
+            
+            if (deployScript) {
+                return {
+                    install: `Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"`,
+                    uninstall: `Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "Silent"`
+                };
+            }
+            
+            // Standard command detection
             const install = analyzedData.scripts.find(s => s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall'));
             const uninstall = analyzedData.scripts.find(s => s.name.toLowerCase().includes('uninstall'));
             return {
@@ -593,6 +660,23 @@
 
         function extractLogPaths() {
             logPaths = {install: '', uninstall: ''};
+            
+            // Check for PSAppDeployToolkit first
+            const deployScript = analyzedData.scripts.find(s => 
+                s.name.toLowerCase() === 'deploy-application.ps1'
+            );
+            
+            if (deployScript) {
+                // PSAppDeployToolkit default log location
+                const logNameMatch = deployScript.content.match(/\$appName\s*=\s*["']([^"']+)["']/i);
+                const appName = logNameMatch ? logNameMatch[1] : 'Application';
+                
+                logPaths.install = `C:\\Windows\\Logs\\Software\\${appName}_PSAppDeployToolkit_Install.log`;
+                logPaths.uninstall = `C:\\Windows\\Logs\\Software\\${appName}_PSAppDeployToolkit_Uninstall.log`;
+                return;
+            }
+            
+            // Standard log path detection
             analyzedData.scripts.forEach(s => {
                 if (s.logging.logFiles.length > 0) {
                     let logFile = s.logging.logFiles[0];
