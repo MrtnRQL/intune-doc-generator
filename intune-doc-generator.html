@@ -186,6 +186,12 @@
                 <div class="section-box">
                     <h3 class="section-header">⚙️ Pakkeinformasjon</h3>
                     
+                    <!-- Debug Info Box -->
+                    <div id="debugInfo" style="display: none; background: #f3f4f6; border: 2px solid #6b7280; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.875rem;">
+                        <strong>🔍 Debug Info:</strong>
+                        <div id="debugContent"></div>
+                    </div>
+                    
                     <div class="alert alert-info" style="margin-bottom: 1.5rem;">
                         <strong>⚠️ Viktig: Dobbeltsjekk informasjonen!</strong><br>
                         Vennligst gå gjennom alle feltene og verifiser at:<br>
@@ -506,6 +512,16 @@
         }
 
         function autoFillForm() {
+            const debugLines = [];
+            debugLines.push(`📊 Total scripts: ${analyzedData.scripts.length}`);
+            debugLines.push(`📦 Total installers: ${analyzedData.installers.length}`);
+            
+            // Show script names
+            if (analyzedData.scripts.length > 0) {
+                debugLines.push(`\n📜 Scripts found:`);
+                analyzedData.scripts.forEach(s => debugLines.push(`  - ${s.name}`));
+            }
+            
             const name = extractPackageName();
             const type = detectPackageType();
             const ver = extractVersion();
@@ -514,6 +530,16 @@
             const det = extractDetectionInfo();
             const deps = extractDependencies(type);
             const notes = extractNotes(type);
+
+            debugLines.push(`\n✅ Extracted values:`);
+            debugLines.push(`  Name: ${name}`);
+            debugLines.push(`  Type: ${type}`);
+            debugLines.push(`  Version: ${ver}`);
+            debugLines.push(`  Install cmd: ${cmds.install.substring(0, 50)}...`);
+
+            // Show debug info
+            document.getElementById('debugInfo').style.display = 'block';
+            document.getElementById('debugContent').innerHTML = debugLines.join('<br>');
 
             document.getElementById('name').value = name;
             document.getElementById('type').value = type;
@@ -529,7 +555,9 @@
         }
 
         function extractPackageName() {
-            console.log('Extracting package name from', analyzedData.scripts.length, 'scripts');
+            const debugLines = [];
+            debugLines.push(`🔍 Looking for package name...`);
+            debugLines.push(`Scripts to check: ${analyzedData.scripts.length}`);
             
             // First check for PSAppDeployToolkit Deploy-Application.ps1
             const deployScript = analyzedData.scripts.find(s => 
@@ -537,14 +565,18 @@
             );
             
             if (deployScript) {
-                console.log('Found Deploy-Application.ps1');
+                debugLines.push('✅ Found Deploy-Application.ps1!');
+                debugLines.push(`Script size: ${deployScript.size} bytes`);
                 
                 // Try to extract app name from PSADT variables
                 const appVendorMatch = deployScript.content.match(/\$appVendor\s*=\s*['"]([^'"]+)['"]/i);
                 const appNameMatch = deployScript.content.match(/\$appName\s*=\s*['"]([^'"]+)['"]/i);
                 
-                console.log('appVendor:', appVendorMatch ? appVendorMatch[1] : 'not found');
-                console.log('appName:', appNameMatch ? appNameMatch[1] : 'not found');
+                debugLines.push(`appVendor found: ${appVendorMatch ? appVendorMatch[1] : '❌ NO'}`);
+                debugLines.push(`appName found: ${appNameMatch ? appNameMatch[1] : '❌ NO'}`);
+                
+                // Update debug display
+                document.getElementById('debugContent').innerHTML += '<br><br>' + debugLines.join('<br>');
                 
                 if (appVendorMatch && appNameMatch) {
                     return `${appVendorMatch[1]} ${appNameMatch[1]}`;
@@ -553,6 +585,9 @@
                 } else if (appVendorMatch) {
                     return appVendorMatch[1];
                 }
+            } else {
+                debugLines.push('❌ Deploy-Application.ps1 NOT found');
+                document.getElementById('debugContent').innerHTML += '<br><br>' + debugLines.join('<br>');
             }
             
             // Standard detection for other scripts
