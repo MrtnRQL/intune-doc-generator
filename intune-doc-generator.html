@@ -529,20 +529,29 @@
         }
 
         function extractPackageName() {
+            console.log('Extracting package name from', analyzedData.scripts.length, 'scripts');
+            
             // First check for PSAppDeployToolkit Deploy-Application.ps1
             const deployScript = analyzedData.scripts.find(s => 
                 s.name.toLowerCase() === 'deploy-application.ps1'
             );
             
             if (deployScript) {
-                // Try to extract app name from PSADT variables
-                const appNameMatch = deployScript.content.match(/\$appName\s*=\s*["']([^"']+)["']/i);
-                if (appNameMatch) return appNameMatch[1];
+                console.log('Found Deploy-Application.ps1');
                 
-                const appVendorMatch = deployScript.content.match(/\$appVendor\s*=\s*["']([^"']+)["']/i);
-                const appNameAltMatch = deployScript.content.match(/\$appName\s*=\s*["']([^"']+)["']/i);
-                if (appVendorMatch && appNameAltMatch) {
-                    return `${appVendorMatch[1]} ${appNameAltMatch[1]}`;
+                // Try to extract app name from PSADT variables
+                const appVendorMatch = deployScript.content.match(/\$appVendor\s*=\s*['"]([^'"]+)['"]/i);
+                const appNameMatch = deployScript.content.match(/\$appName\s*=\s*['"]([^'"]+)['"]/i);
+                
+                console.log('appVendor:', appVendorMatch ? appVendorMatch[1] : 'not found');
+                console.log('appName:', appNameMatch ? appNameMatch[1] : 'not found');
+                
+                if (appVendorMatch && appNameMatch) {
+                    return `${appVendorMatch[1]} ${appNameMatch[1]}`;
+                } else if (appNameMatch) {
+                    return appNameMatch[1];
+                } else if (appVendorMatch) {
+                    return appVendorMatch[1];
                 }
             }
             
