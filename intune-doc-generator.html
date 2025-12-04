@@ -209,10 +209,13 @@
                         <div>
                             <label class="form-label">Type</label>
                             <select id="type" class="form-select">
-                                <option>Win32 Intune Package</option>
-                                <option>Printer Installation Script (Win32 Intune Package)</option>
-                                <option>Application Installation Package</option>
-                                <option>Configuration Script</option>
+                                <option>Win32: PSADT</option>
+                                <option>Win32: MSI</option>
+                                <option>Win32: EXE</option>
+                                <option>Win32: MSIX</option>
+                                <option>Win32: PowerShell</option>
+                                <option>Win32: Batch/CMD</option>
+                                <option>Win32: Hybrid</option>
                             </select>
                         </div>
                         <div>
@@ -605,13 +608,48 @@
             
             // Check for PSAppDeployToolkit
             if (names.includes('deploy-application.ps1') || 
-                analyzedData.scripts.some(s => s.content.includes('PSAppDeployToolkit'))) {
-                return 'Application Installation Package';
+                analyzedData.scripts.some(s => s.content && s.content.includes('PSAppDeployToolkit'))) {
+                return 'Win32: PSADT';
             }
             
-            if (names.includes('printer')) return 'Printer Installation Script (Win32 Intune Package)';
-            if (analyzedData.installers.some(f => f.name.endsWith('.msi'))) return 'Application Installation Package';
-            return 'Win32 Intune Package';
+            // Check for MSIX
+            if (analyzedData.installers.some(f => f.name.toLowerCase().endsWith('.msix'))) {
+                return 'Win32: MSIX';
+            }
+            
+            // Check for MSI
+            if (analyzedData.installers.some(f => f.name.toLowerCase().endsWith('.msi'))) {
+                return 'Win32: MSI';
+            }
+            
+            // Check for EXE
+            if (analyzedData.installers.some(f => f.name.toLowerCase().endsWith('.exe'))) {
+                return 'Win32: EXE';
+            }
+            
+            // Check if only PowerShell scripts (no installers)
+            if (analyzedData.scripts.length > 0 && analyzedData.installers.length === 0) {
+                return 'Win32: PowerShell';
+            }
+            
+            // Check for Batch/CMD
+            if (analyzedData.other.some(f => f.name.toLowerCase().match(/\.(bat|cmd)$/))) {
+                return 'Win32: Batch/CMD';
+            }
+            
+            // If multiple installer types
+            const installerTypes = new Set();
+            analyzedData.installers.forEach(f => {
+                const ext = f.name.split('.').pop().toLowerCase();
+                if (['msi', 'exe', 'msix'].includes(ext)) installerTypes.add(ext);
+            });
+            
+            if (installerTypes.size > 1 || (analyzedData.scripts.length > 0 && analyzedData.installers.length > 1)) {
+                return 'Win32: Hybrid';
+            }
+            
+            // Default
+            return 'Win32: EXE';
         }
 
         function extractVersion() {
@@ -655,7 +693,6 @@
                 if (m) return m[1].trim().replace(/\s+/g, ' ');
             }
             
-            if (type.includes('Printer')) return 'Installs network printer including:\n- Creation of TCP/IP port\n- Installation of required print driver\n- Creation of the printer object';
             return '';
         }
 
@@ -692,13 +729,30 @@
         }
 
         function extractDependencies(type) {
-            if (type.includes('Printer')) return '- Windows 10 22H2 or newer\n- System context required (install modifies drivers, ports, and printer objects)\n- Network access to the printer IP address';
+            // Generic dependencies for all Win32 packages
             return '- Windows 10 22H2 or newer\n- System context required';
         }
 
         function extractNotes(type) {
             const notes = ['- No reboot required'];
-            if (type.includes('Printer')) notes.push('- Printer is installed with specific port and driver settings defined in the script', '- Ensure driver package for this printer model is deployed separately (if applicable)');
+            
+            // Check if any script contains reboot commands
+            const needsReboot = analyzedData.scripts.some(s => 
+                s.content && (s.content.includes('Restart-Computer') || 
+                s.content.includes('shutdown') || 
+                s.content.includes('/reboot'))
+            );
+            
+            if (needsReboot) {
+                notes[0] = '- Reboot may be required';
+            }
+            
+            // Add type-specific notes
+            if (type === 'Win32: PSADT') {
+                notes.push('- Uses PSAppDeployToolkit for deployment');
+                notes.push('- Supports user interaction and deferral options');
+            }
+            
             return notes.join('\n');
         }
 
