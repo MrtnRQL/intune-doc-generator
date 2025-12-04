@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intune Dokumentasjonsgenerator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+        .container { max-width: 80rem; margin: 0 auto; }
+        .card { background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 1.5rem; }
+        .title { font-size: 2rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
+        .subtitle { color: #6b7280; margin-bottom: 2rem; }
+        
+        /* Folder Selection */
+        .folder-zone { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 13rem; border: 3px dashed #818cf8; border-radius: 0.5rem;
+            cursor: pointer; background: #eef2ff; transition: 0.2s; margin-bottom: 2rem;
+        }
+        .folder-zone:hover { background: #e0e7ff; border-color: #6366f1; }
+        .folder-zone.drag-over { background: #c7d2fe; border-color: #4f46e5; border-width: 3px; }
+        .folder-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .folder-text { font-size: 1.25rem; font-weight: 600; color: #4f46e5; }
+        .folder-subtext { font-size: 0.9rem; color: #6b7280; margin-top: 0.5rem; }
+        
+        /* File List */
+        .file-section { background: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .file-section-title { font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem; }
+        .file-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem; transition: 0.2s; }
+        .file-card:hover { border-color: #6366f1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .file-icon { font-size: 1.5rem; }
+        .file-info { flex: 1; min-width: 0; }
+        .file-name { font-size: 0.875rem; font-weight: 500; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-size { font-size: 0.75rem; color: #6b7280; }
+        
+        /* Forms */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
+        .form-input, .form-textarea, .form-select { 
+            width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db;
+            border-radius: 0.375rem; font-size: 0.875rem; font-family: inherit;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus { 
+            outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+        .col-span-2 { grid-column: span 2; }
+        
+        /* Buttons */
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover:not(:disabled) { background: #4338ca; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover:not(:disabled) { background: #059669; }
+        .btn-blue { background: #3b82f6; color: white; }
+        .btn-blue:hover:not(:disabled) { background: #2563eb; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-purple:hover:not(:disabled) { background: #7c3aed; }
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.5rem; }
+        @media (max-width: 768px) { .btn-grid { grid-template-columns: 1fr; } }
+        
+        /* Other */
+        .section-box { background: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
+        .preview-box { background: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; border: 2px solid #e5e7eb; margin-top: 1.5rem; }
+        .preview-content { background: white; padding: 1rem; border-radius: 0.375rem; border: 1px solid #e5e7eb; max-height: 28rem; overflow: auto; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.875rem; color: #374151; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 1rem; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #1f2937; }
+        .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; text-transform: uppercase; }
+        input[type="file"] { display: none; }
+        .alert { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid; }
+        .alert-info { background: #fef3c7; color: #78350f; border-color: #fbbf24; }
+        .folder-path { background: #f3f4f6; padding: 0.75rem; border-radius: 0.375rem; font-family: 'Courier New', monospace; font-size: 0.875rem; color: #374151; margin-bottom: 1rem; word-break: break-all; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 0.75rem; padding: 2rem; max-width: 600px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; }
+        .modal-close { margin-left: auto; cursor: pointer; font-size: 1.5rem; color: #6b7280; }
+        .modal-close:hover { color: #1f2937; }
+        .modal-body { color: #374151; line-height: 1.6; }
+        .modal-step { background: #f9fafb; border-left: 4px solid #3b82f6; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem; }
+        .modal-step-number { display: inline-block; background: #3b82f6; color: white; width: 1.5rem; height: 1.5rem; border-radius: 50%; text-align: center; line-height: 1.5rem; font-weight: 600; margin-right: 0.5rem; font-size: 0.875rem; }
+        .modal-path { background: #1f2937; color: #10b981; padding: 0.75rem; border-radius: 0.375rem; font-family: 'Courier New', monospace; font-size: 0.875rem; margin: 1rem 0; word-break: break-all; }
+        .modal-tip { background: #fef3c7; border: 1px solid #fbbf24; padding: 1rem; border-radius: 0.375rem; margin-top: 1rem; }
+        .modal-tip strong { color: #92400e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 class="title">📁 Intune Pakke Dokumentasjonsgenerator</h1>
+            <p class="subtitle">Velg en mappe, skann innholdet, generer dokumentasjon og flytt til SharePoint</p>
+
+            <label class="folder-zone" id="folderZone">
+                <div class="folder-icon">📂</div>
+                <div class="folder-text">Velg mapper eller dra filer hit</div>
+                <div class="folder-subtext">Klikk flere ganger for å legge til flere mapper • Drag & drop støttet</div>
+                <input type="file" id="folderInput" webkitdirectory directory multiple>
+                <input type="file" id="multiFileInput" multiple accept=".ps1,.exe,.msi,.msix,.intunewin,.json,.xml,.config,.ini,.txt,.reg" style="display: none;">
+            </label>
+
+            <!-- Reset button -->
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <button class="btn btn-primary" onclick="resetSelection()" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                    🔄 Start på nytt
+                </button>
+            </div>
+
+            <div id="contentArea" style="display: none;">
+                <!-- Folder Path -->
+                <div class="alert alert-info">
+                    <strong>📂 Valgt mappe:</strong><br>
+                    <div class="folder-path" id="folderPath"></div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalFiles">0</div>
+                        <div class="stat-label">Totale filer</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="scriptCount">0</div>
+                        <div class="stat-label">PowerShell Scripts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="installerCount">0</div>
+                        <div class="stat-label">Installere</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="configCount">0</div>
+                        <div class="stat-label">Konfig filer</div>
+                    </div>
+                </div>
+
+                <!-- File Lists by Category -->
+                <div id="scriptSection" class="file-section" style="display: none;">
+                    <div class="file-section-title">
+                        📜 PowerShell Scripts
+                        <span class="badge badge-blue" id="scriptBadge">0</span>
+                    </div>
+                    <div class="file-grid" id="scriptList"></div>
+                </div>
+
+                <div id="installerSection" class="file-section" style="display: none;">
+                    <div class="file-section-title">
+                        📦 Installasjonsfiler
+                        <span class="badge badge-blue" id="installerBadge">0</span>
+                    </div>
+                    <div class="file-grid" id="installerList"></div>
+                </div>
+
+                <div id="configSection" class="file-section" style="display: none;">
+                    <div class="file-section-title">
+                        ⚙️ Konfigurasjonsfiler
+                        <span class="badge badge-blue" id="configBadge">0</span>
+                    </div>
+                    <div class="file-grid" id="configList"></div>
+                </div>
+
+                <div id="otherSection" class="file-section" style="display: none;">
+                    <div class="file-section-title">
+                        📄 Andre filer
+                        <span class="badge badge-blue" id="otherBadge">0</span>
+                    </div>
+                    <div class="file-grid" id="otherList"></div>
+                </div>
+
+                <!-- Package Info Form -->
+                <div class="section-box">
+                    <h3 class="section-header">⚙️ Pakkeinformasjon</h3>
+                    
+                    <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                        <strong>⚠️ Viktig: Dobbeltsjekk informasjonen!</strong><br>
+                        Vennligst gå gjennom alle feltene og verifiser at:<br>
+                        • <strong>Type</strong> er korrekt valgt for din pakke<br>
+                        • <strong>Beskrivelse</strong> er fylt ut med relevant informasjon<br>
+                        • <strong>Eier</strong> er spesifisert (ditt navn eller team)<br>
+                        • Alle kommandoer og stier er riktige
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div>
+                            <label class="form-label">Pakkenavn *</label>
+                            <input type="text" id="name" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">Type</label>
+                            <select id="type" class="form-select">
+                                <option>Win32 Intune Package</option>
+                                <option>Printer Installation Script (Win32 Intune Package)</option>
+                                <option>Application Installation Package</option>
+                                <option>Configuration Script</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Versjon</label>
+                            <input type="text" id="version" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">Eier</label>
+                            <input type="text" id="owner" class="form-input">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Beskrivelse</label>
+                            <textarea id="description" class="form-textarea" rows="3"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Installasjonskommando</label>
+                            <input type="text" id="installCommand" class="form-input">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Avinstallasjonskommando</label>
+                            <input type="text" id="uninstallCommand" class="form-input">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Deteksjonsmetode</label>
+                            <textarea id="detectMethod" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Deteksjonsskript</label>
+                            <input type="text" id="detectScript" class="form-input">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Avhengigheter</label>
+                            <textarea id="dependencies" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label">Notater</label>
+                            <textarea id="notes" class="form-textarea" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="togglePreview()" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                        <span>📄</span> Vis dokumentasjon
+                    </button>
+                </div>
+
+                <!-- Preview -->
+                <div id="previewBox" class="preview-box" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3 class="section-header" style="margin: 0;">📄 Dokumentasjon</h3>
+                        <button class="btn btn-success" onclick="copyToClipboard()" style="padding: 0.5rem 1rem;">
+                            <span>📋</span> Kopier til utklippstavle
+                        </button>
+                    </div>
+                    <div class="preview-content" id="previewContent"></div>
+                    <div id="copySuccess" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #d1fae5; color: #065f46; border-radius: 0.375rem; text-align: center; font-weight: 600;">
+                        ✅ Dokumentasjon kopiert til utklippstavlen!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analyzedData = {scripts: [], installers: [], configs: [], other: []};
+        let logPaths = {install: '', uninstall: ''};
+        let allFiles = [];
+        let selectedFolderPath = '';
+        let allSubfolders = new Set();
+
+        document.getElementById('folderInput').addEventListener('change', handleFolderSelection);
+        document.getElementById('multiFileInput').addEventListener('change', handleMultiFileSelection);
+
+        // Drag and drop support
+        const folderZone = document.getElementById('folderZone');
+        
+        folderZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            folderZone.classList.add('drag-over');
+        });
+
+        folderZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            folderZone.classList.remove('drag-over');
+        });
+
+        folderZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            folderZone.classList.remove('drag-over');
+
+            const items = e.dataTransfer.items;
+            const droppedFiles = [];
+
+            // Process all dropped items (folders and files)
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i].webkitGetAsEntry();
+                if (item) {
+                    await traverseFileTree(item, droppedFiles);
+                }
+            }
+
+            if (droppedFiles.length > 0) {
+                // ADD to existing instead of replacing
+                allFiles = [...allFiles, ...droppedFiles];
+                if (allFiles.length > droppedFiles.length) {
+                    selectedFolderPath = 'Flere mapper/filer';
+                } else {
+                    selectedFolderPath = 'Droppede filer/mapper';
+                }
+                await processFiles();
+            }
+        });
+
+        function resetSelection() {
+            allFiles = [];
+            analyzedData = {scripts: [], installers: [], configs: [], other: []};
+            allSubfolders = new Set();
+            selectedFolderPath = '';
+            document.getElementById('contentArea').style.display = 'none';
+            document.getElementById('folderInput').value = '';
+            document.getElementById('multiFileInput').value = '';
+        }
+
+        // Recursive function to handle folders and files
+        async function traverseFileTree(item, fileList, path = '') {
+            return new Promise((resolve) => {
+                if (item.isFile) {
+                    item.file((file) => {
+                        // Add path info to file
+                        Object.defineProperty(file, 'webkitRelativePath', {
+                            value: path + file.name,
+                            writable: false
+                        });
+                        fileList.push(file);
+                        resolve();
+                    });
+                } else if (item.isDirectory) {
+                    const dirReader = item.createReader();
+                    dirReader.readEntries(async (entries) => {
+                        for (const entry of entries) {
+                            await traverseFileTree(entry, fileList, path + item.name + '/');
+                        }
+                        resolve();
+                    });
+                }
+            });
+        }
+
+        async function handleMultiFileSelection(e) {
+            const newFiles = Array.from(e.target.files);
+            if (newFiles.length === 0) return;
+
+            // ALWAYS ADD to existing files, never replace
+            allFiles = [...allFiles, ...newFiles];
+            
+            if (!selectedFolderPath || selectedFolderPath === '') {
+                selectedFolderPath = 'Flere valgte filer';
+            } else if (!selectedFolderPath.includes('Flere')) {
+                selectedFolderPath = 'Flere mapper/filer';
+            }
+
+            await processFiles();
+        }
+
+        async function handleFolderSelection(e) {
+            const newFiles = Array.from(e.target.files);
+            if (newFiles.length === 0) return;
+
+            // ADD to existing files instead of replacing
+            if (allFiles.length > 0) {
+                allFiles = [...allFiles, ...newFiles];
+                selectedFolderPath = 'Flere mapper/filer';
+            } else {
+                allFiles = newFiles;
+                // Extract folder path
+                const firstFile = newFiles[0];
+                const pathParts = firstFile.webkitRelativePath.split('/');
+                selectedFolderPath = pathParts[0];
+            }
+            
+            // Find all unique subfolders
+            allSubfolders = new Set();
+            allFiles.forEach(file => {
+                const parts = file.webkitRelativePath.split('/');
+                if (parts.length > 2) {
+                    for (let i = 1; i < parts.length - 1; i++) {
+                        allSubfolders.add(parts.slice(0, i + 1).join('/'));
+                    }
+                }
+            });
+
+            await processFiles();
+        }
+
+        async function processFiles() {
+            let folderPathDisplay = selectedFolderPath;
+            if (allSubfolders.size > 0) {
+                folderPathDisplay += ` (${allSubfolders.size} undermapper funnet)`;
+            }
+            
+            document.getElementById('folderPath').textContent = folderPathDisplay;
+            document.getElementById('contentArea').style.display = 'block';
+
+            // Reset
+            analyzedData = {scripts: [], installers: [], configs: [], other: []};
+
+            // Analyze all files
+            for (const file of allFiles) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const relativePath = file.webkitRelativePath || file.name;
+                const fileInfo = {
+                    name: file.name,
+                    size: file.size,
+                    path: relativePath,
+                    subfolder: relativePath.includes('/') ? relativePath.split('/').slice(0, -1).join('/') : ''
+                };
+
+                if (ext === 'ps1') {
+                    const content = await file.text();
+                    analyzedData.scripts.push({...fileInfo, content, logging: analyzeLogging(content)});
+                } else if (['exe','msi','msix','intunewin'].includes(ext)) {
+                    analyzedData.installers.push(fileInfo);
+                } else if (['json','xml','config','ini','txt'].includes(ext)) {
+                    analyzedData.configs.push(fileInfo);
+                } else {
+                    analyzedData.other.push(fileInfo);
+                }
+            }
+
+            displayFiles();
+            autoFillForm();
+        }
+
+        function displayFiles() {
+            // Update stats
+            document.getElementById('totalFiles').textContent = allFiles.length;
+            document.getElementById('scriptCount').textContent = analyzedData.scripts.length;
+            document.getElementById('installerCount').textContent = analyzedData.installers.length;
+            document.getElementById('configCount').textContent = analyzedData.configs.length;
+
+            // Display scripts
+            if (analyzedData.scripts.length > 0) {
+                document.getElementById('scriptSection').style.display = 'block';
+                document.getElementById('scriptBadge').textContent = analyzedData.scripts.length;
+                document.getElementById('scriptList').innerHTML = analyzedData.scripts.map(f => createFileCard(f, '📜')).join('');
+            }
+
+            // Display installers
+            if (analyzedData.installers.length > 0) {
+                document.getElementById('installerSection').style.display = 'block';
+                document.getElementById('installerBadge').textContent = analyzedData.installers.length;
+                document.getElementById('installerList').innerHTML = analyzedData.installers.map(f => createFileCard(f, '📦')).join('');
+            }
+
+            // Display configs
+            if (analyzedData.configs.length > 0) {
+                document.getElementById('configSection').style.display = 'block';
+                document.getElementById('configBadge').textContent = analyzedData.configs.length;
+                document.getElementById('configList').innerHTML = analyzedData.configs.map(f => createFileCard(f, '⚙️')).join('');
+            }
+
+            // Display others
+            if (analyzedData.other.length > 0) {
+                document.getElementById('otherSection').style.display = 'block';
+                document.getElementById('otherBadge').textContent = analyzedData.other.length;
+                document.getElementById('otherList').innerHTML = analyzedData.other.map(f => createFileCard(f, '📄')).join('');
+            }
+        }
+
+        function createFileCard(file, icon) {
+            const size = (file.size / 1024).toFixed(1);
+            const subfolder = file.subfolder ? `<div style="font-size: 0.7rem; color: #9ca3af;">📁 ${file.subfolder}</div>` : '';
+            return `
+                <div class="file-card">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-info">
+                        <div class="file-name" title="${file.path}">${file.name}</div>
+                        ${subfolder}
+                        <div class="file-size">${size} KB</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function analyzeLogging(content) {
+            const logFiles = [];
+            const patterns = [/["']([^"']*\.log)["']/gi, /\$log(?:File|Path)\s*=\s*["']([^"']+)["']/gi];
+            patterns.forEach(p => {
+                let m; while ((m = p.exec(content))) logFiles.push(m[1]);
+            });
+            return {logFiles};
+        }
+
+        function autoFillForm() {
+            const name = extractPackageName();
+            const type = detectPackageType();
+            const ver = extractVersion();
+            const desc = extractDescription(type);
+            const cmds = extractCommands();
+            const det = extractDetectionInfo();
+            const deps = extractDependencies(type);
+            const notes = extractNotes(type);
+
+            document.getElementById('name').value = name;
+            document.getElementById('type').value = type;
+            document.getElementById('version').value = ver;
+            document.getElementById('description').value = desc;
+            document.getElementById('installCommand').value = cmds.install;
+            document.getElementById('uninstallCommand').value = cmds.uninstall;
+            document.getElementById('detectMethod').value = det.method;
+            document.getElementById('detectScript').value = det.scriptName;
+            document.getElementById('dependencies').value = deps;
+            document.getElementById('notes').value = notes;
+            extractLogPaths();
+        }
+
+        function extractPackageName() {
+            for (const s of analyzedData.scripts) {
+                const m = s.name.match(/(?:Install|Uninstall|Detect)-(.+?)\.ps1/i);
+                if (m) return m[1].replace(/([A-Z])/g, ' $1').trim();
+            }
+            if (selectedFolderPath) return selectedFolderPath.replace(/[-_]/g, ' ');
+            return analyzedData.installers[0]?.name.replace(/\.(exe|msi)$/i, '').replace(/[-_]/g, ' ') || '';
+        }
+
+        function detectPackageType() {
+            const names = analyzedData.scripts.map(s => s.name.toLowerCase()).join(' ');
+            if (names.includes('printer')) return 'Printer Installation Script (Win32 Intune Package)';
+            if (analyzedData.installers.some(f => f.name.endsWith('.msi'))) return 'Application Installation Package';
+            return 'Win32 Intune Package';
+        }
+
+        function extractVersion() {
+            for (const s of analyzedData.scripts) {
+                const m = s.content.match(/\$version\s*=\s*["']([^"']+)["']/i) || s.content.match(/#\s*Version:?\s*([0-9.]+)/i);
+                if (m) return m[1];
+            }
+            return '1.0';
+        }
+
+        function extractDescription(type) {
+            for (const s of analyzedData.scripts) {
+                const m = s.content.match(/\.SYNOPSIS\s+(.+?)(?:\.|\.DESCRIPTION|\n\n)/is);
+                if (m) return m[1].trim().replace(/\s+/g, ' ');
+            }
+            if (type.includes('Printer')) return 'Installs network printer including:\n- Creation of TCP/IP port\n- Installation of required print driver\n- Creation of the printer object';
+            return '';
+        }
+
+        function extractCommands() {
+            const install = analyzedData.scripts.find(s => s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall'));
+            const uninstall = analyzedData.scripts.find(s => s.name.toLowerCase().includes('uninstall'));
+            return {
+                install: install ? `powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File .\\${install.name}` : '',
+                uninstall: uninstall ? `powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File .\\${uninstall.name}` : ''
+            };
+        }
+
+        function extractDetectionInfo() {
+            const detect = analyzedData.scripts.find(s => s.name.toLowerCase().includes('detect'));
+            if (!detect) return {method: 'Detection is handled using a PowerShell script or registry/file detection method.', scriptName: ''};
+            let method = 'Detection is handled using a PowerShell script';
+            const c = detect.content.toLowerCase();
+            if (c.includes('get-printer')) method += ' checking for the presence of the printer object';
+            else if (c.includes('test-path')) method += ' checking for files or folders';
+            return {method: method + '.', scriptName: detect.name};
+        }
+
+        function extractDependencies(type) {
+            if (type.includes('Printer')) return '- Windows 10 22H2 or newer\n- System context required (install modifies drivers, ports, and printer objects)\n- Network access to the printer IP address';
+            return '- Windows 10 22H2 or newer\n- System context required';
+        }
+
+        function extractNotes(type) {
+            const notes = ['- No reboot required'];
+            if (type.includes('Printer')) notes.push('- Printer is installed with specific port and driver settings defined in the script', '- Ensure driver package for this printer model is deployed separately (if applicable)');
+            return notes.join('\n');
+        }
+
+        function extractLogPaths() {
+            logPaths = {install: '', uninstall: ''};
+            analyzedData.scripts.forEach(s => {
+                if (s.logging.logFiles.length > 0) {
+                    let logFile = s.logging.logFiles[0];
+                    let fullPath = logFile;
+                    
+                    // If logFile doesn't contain full path, try to extract it from script
+                    if (!logFile.includes('\\') && !logFile.includes('/')) {
+                        // Try to find the full path variable in the script
+                        const pathPatterns = [
+                            /\$log(?:Path|File|Dir|Folder)\s*=\s*["']([^"']+)["']/gi,
+                            /\$(?:Path|LogPath|LogDir)\s*=\s*["']([^"']+)["']/gi,
+                            /-FilePath\s+["']([^"']+)["']/gi,
+                            /-Path\s+["']([^"']+)["']/gi
+                        ];
+                        
+                        let foundPath = false;
+                        for (const pattern of pathPatterns) {
+                            const match = s.content.match(pattern);
+                            if (match) {
+                                let extractedPath = match[0].match(/["']([^"']+)["']/)[1];
+                                // If path doesn't end with backslash, add it
+                                if (!extractedPath.endsWith('\\') && !extractedPath.endsWith('/')) {
+                                    extractedPath += '\\';
+                                }
+                                fullPath = extractedPath + logFile;
+                                foundPath = true;
+                                break;
+                            }
+                        }
+                        
+                        // If no explicit path found, check for environment variables
+                        if (!foundPath) {
+                            if (s.content.includes('$env:ProgramData') || s.content.includes('$ProgramData')) {
+                                fullPath = 'C:\\ProgramData\\IntuneLogs\\' + logFile;
+                            } else if (s.content.includes('$env:TEMP') || s.content.includes('$Temp')) {
+                                fullPath = '%TEMP%\\' + logFile;
+                            } else if (s.content.includes('$env:LOCALAPPDATA')) {
+                                fullPath = '%LOCALAPPDATA%\\' + logFile;
+                            } else if (s.content.includes('$PSScriptRoot')) {
+                                fullPath = '[Script Directory]\\' + logFile;
+                            } else {
+                                // Default fallback
+                                fullPath = 'C:\\ProgramData\\IntuneLogs\\' + logFile;
+                            }
+                        }
+                    }
+                    
+                    // Assign to correct log type
+                    if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
+                        logPaths.install = fullPath;
+                    } else if (s.name.toLowerCase().includes('uninstall')) {
+                        logPaths.uninstall = fullPath;
+                    }
+                }
+            });
+        }
+
+        function generateDoc() {
+            const today = new Date().toISOString().split('T')[0];
+            return `Name:  
+${document.getElementById('name').value || '[Insert name]'}
+
+Type:  
+${document.getElementById('type').value}
+
+Version:  
+${document.getElementById('version').value || '1.0'}
+
+Date:  
+${today}
+
+Owner:  
+${document.getElementById('owner').value || '(Insert owner)'}
+
+
+Description:  
+${document.getElementById('description').value || '[Insert description]'}
+
+
+Installation:  
+${document.getElementById('installCommand').value ? `The package is installed with the following command:
+
+${document.getElementById('installCommand').value}` : '[Insert command]'}
+${logPaths.install ? `
+
+Installation log file path:  
+${logPaths.install}` : ''}
+
+
+Uninstallation:  
+${document.getElementById('uninstallCommand').value ? `The package is removed using:
+
+${document.getElementById('uninstallCommand').value}` : '[Insert command]'}
+${logPaths.uninstall ? `
+
+Uninstall log file path:  
+${logPaths.uninstall}` : ''}
+
+
+Detection:  
+${document.getElementById('detectMethod').value || 'Detection handled by PowerShell script'}
+${document.getElementById('detectScript').value ? `
+
+Detection script:  
+${document.getElementById('detectScript').value}` : ''}
+
+
+Dependencies:  
+${document.getElementById('dependencies').value || '- Windows 10 or newer'}
+
+
+Notes:  
+${document.getElementById('notes').value || '- No reboot required'}
+
+---
+*Generated: ${new Date().toLocaleString('nb-NO')}*
+*Source folder: ${selectedFolderPath}*`;
+        }
+
+        function togglePreview() {
+            const box = document.getElementById('previewBox');
+            const btn = event.target.closest('button');
+            if (box.style.display === 'none') {
+                document.getElementById('previewContent').textContent = generateDoc();
+                box.style.display = 'block';
+                btn.innerHTML = '<span>📄</span> Skjul dokumentasjon';
+                // Hide copy success message when reopening
+                document.getElementById('copySuccess').style.display = 'none';
+            } else {
+                box.style.display = 'none';
+                btn.innerHTML = '<span>📄</span> Vis dokumentasjon';
+            }
+        }
+
+        function copyToClipboard() {
+            const doc = generateDoc();
+            navigator.clipboard.writeText(doc).then(() => {
+                // Show success message
+                const successMsg = document.getElementById('copySuccess');
+                successMsg.style.display = 'block';
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            }).catch(err => {
+                alert('Kunne ikke kopiere til utklippstavlen. Prøv igjen.');
+                console.error('Copy failed:', err);
+            });
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('sharePointModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
