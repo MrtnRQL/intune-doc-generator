@@ -196,7 +196,7 @@
                         <strong>⚠️ Viktig: Dobbeltsjekk informasjonen!</strong><br>
                         Vennligst gå gjennom alle feltene og verifiser at:<br>
                         • <strong>Type</strong> er korrekt valgt for din pakke<br>
-                        • <strong>Install Behavior</strong> er riktig (System for maskinkontekst, User for brukerkontekst)<br>
+                        • <strong>Install Behavior</strong> er riktig valgt (System eller User)<br>
                         • <strong>Beskrivelse</strong> er fylt ut med relevant informasjon<br>
                         • <strong>Eier</strong> er spesifisert (ditt navn eller team)<br>
                         • Alle kommandoer og stier er riktige
@@ -529,7 +529,6 @@
             const name = extractPackageName();
             const type = detectPackageType();
             const ver = extractVersion();
-            const installBehavior = detectInstallBehavior(type);
             const desc = extractDescription(type);
             const cmds = extractCommands();
             const det = extractDetectionInfo();
@@ -540,7 +539,6 @@
             debugLines.push(`  Name: ${name}`);
             debugLines.push(`  Type: ${type}`);
             debugLines.push(`  Version: ${ver}`);
-            debugLines.push(`  Install Behavior: ${installBehavior}`);
             debugLines.push(`  Install cmd: ${cmds.install.substring(0, 50)}...`);
 
             // Show debug info
@@ -550,7 +548,6 @@
             document.getElementById('name').value = name;
             document.getElementById('type').value = type;
             document.getElementById('version').value = ver;
-            document.getElementById('installBehavior').value = installBehavior;
             document.getElementById('description').value = desc;
             document.getElementById('installCommand').value = cmds.install;
             document.getElementById('uninstallCommand').value = cmds.uninstall;
@@ -559,42 +556,6 @@
             document.getElementById('dependencies').value = deps;
             document.getElementById('notes').value = notes;
             extractLogPaths();
-        }
-
-        function detectInstallBehavior(type) {
-            // Check scripts for #Requires -RunAsAdministrator
-            for (const script of analyzedData.scripts) {
-                if (script.content.includes('#Requires -RunAsAdministrator')) {
-                    return 'System';
-                }
-                if (script.content.includes('$env:ProgramFiles')) {
-                    return 'System';
-                }
-            }
-            
-            // PSADT and MSI typically run as System
-            if (type === 'Win32: PSADT' || type === 'Win32: MSI') {
-                return 'System';
-            }
-            
-            // EXE can be either, default to System for safety
-            if (type === 'Win32: EXE') {
-                return 'System';
-            }
-            
-            // PowerShell scripts might be user context
-            if (type === 'Win32: PowerShell') {
-                // Check if it modifies user-specific locations
-                const hasUserContext = analyzedData.scripts.some(s => 
-                    s.content.includes('$env:APPDATA') || 
-                    s.content.includes('HKCU:') ||
-                    s.content.includes('HKEY_CURRENT_USER')
-                );
-                return hasUserContext ? 'User' : 'System';
-            }
-            
-            // Default to System
-            return 'System';
         }
 
         function extractPackageName() {
