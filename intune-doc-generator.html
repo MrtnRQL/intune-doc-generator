@@ -50,8 +50,10 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator</h1>
-            <p class="subtitle">Velg en mappe og generer dokumentasjon</p>
+            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator v2</h1>
+            <p style="font-style: italic; color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem;">
+                "Code tells you how. Documentation tells you why. Future you will thank present you for good documentation." — Unknown IT Legend
+            </p>
 
             <label class="folder-zone">
                 <div style="font-size: 4rem;">📂</div>
@@ -99,7 +101,7 @@
                         <strong>⚠️ Viktig:</strong> Sjekk Type, Install Behavior, Beskrivelse og Eier
                     </div>
                     <div class="form-grid">
-                        <div><label class="form-label">Pakkenavn *</label><input type="text" id="name" class="form-input"></div>
+                        <div><label class="form-label">Pakkenavn *</label><input type="text" id="name" class="form-input" placeholder="F.eks: Adobe Reader DC"></div>
                         <div><label class="form-label">Type</label>
                             <select id="type" class="form-select">
                                 <option>Win32: PSADT</option>
@@ -111,9 +113,9 @@
                                 <option>Win32: Hybrid</option>
                             </select>
                         </div>
-                        <div><label class="form-label">Versjon</label><input type="text" id="version" class="form-input"></div>
-                        <div><label class="form-label">Eier</label><input type="text" id="owner" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Beskrivelse</label><textarea id="description" class="form-textarea" rows="3"></textarea></div>
+                        <div><label class="form-label">Versjon</label><input type="text" id="version" class="form-input" placeholder="F.eks: 24.1.0"></div>
+                        <div><label class="form-label">Eier</label><input type="text" id="owner" class="form-input" placeholder="F.eks: IT-avdelingen"></div>
+                        <div class="col-span-2"><label class="form-label">Beskrivelse</label><textarea id="description" class="form-textarea" rows="3" placeholder="Beskriv hva applikasjonen gjør og hvem den er for"></textarea></div>
                         <div class="col-span-2">
                             <label class="form-label">Install Behavior *</label>
                             <select id="installBehavior" class="form-select">
@@ -124,10 +126,10 @@
                         </div>
                         <div class="col-span-2"><label class="form-label">Installasjonskommando</label><input type="text" id="installCommand" class="form-input"></div>
                         <div class="col-span-2"><label class="form-label">Avinstallasjonskommando</label><input type="text" id="uninstallCommand" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Deteksjonsmetode</label><textarea id="detectMethod" class="form-textarea" rows="2"></textarea></div>
-                        <div class="col-span-2"><label class="form-label">Deteksjonsskript</label><input type="text" id="detectScript" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Avhengigheter</label><textarea id="dependencies" class="form-textarea" rows="2"></textarea></div>
-                        <div class="col-span-2"><label class="form-label">Notater</label><textarea id="notes" class="form-textarea" rows="2"></textarea></div>
+                        <div class="col-span-2"><label class="form-label">Deteksjonsmetode</label><textarea id="detectMethod" class="form-textarea" rows="2" placeholder="F.eks: Fil eller register-basert deteksjon"></textarea></div>
+                        <div class="col-span-2"><label class="form-label">Deteksjonsskript</label><input type="text" id="detectScript" class="form-input" placeholder="F.eks: Detect-Application.ps1"></div>
+                        <div class="col-span-2"><label class="form-label">Avhengigheter</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="F.eks: .NET Framework 4.8 eller høyere"></textarea></div>
+                        <div class="col-span-2"><label class="form-label">Notater</label><textarea id="notes" class="form-textarea" rows="2" placeholder="F.eks: Ingen omstart nødvendig"></textarea></div>
                     </div>
                 </div>
 
