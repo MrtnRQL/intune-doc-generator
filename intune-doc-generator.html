@@ -24,6 +24,12 @@
         .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 1rem; text-align: center; }
         .stat-value { font-size: 1.5rem; font-weight: 700; color: #1f2937; }
         .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+        .file-section { background: #f9fafb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+        .file-section-title { font-weight: 600; color: #1f2937; margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; }
+        .file-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.5rem; font-size: 0.85rem; }
+        .file-name { font-weight: 500; color: #1f2937; }
+        .file-size { color: #6b7280; font-size: 0.75rem; }
         .section-box { background: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
         .section-header { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
@@ -44,7 +50,7 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">📁 Intune Pakke Dokumentasjonsgenerator</h1>
+            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator</h1>
             <p class="subtitle">Velg en mappe og generer dokumentasjon</p>
 
             <label class="folder-zone">
@@ -53,12 +59,38 @@
                 <input type="file" id="folderInput" webkitdirectory directory multiple>
             </label>
 
+            <div class="alert alert-info" style="margin-bottom: 2rem;">
+                <strong>🔒 Personvern:</strong> Alle filer behandles kun i din nettleser. Ingenting lastes opp til servere. 
+                Alt skjer lokalt på din PC og slettes når du lukker siden.
+            </div>
+
+            <div class="alert alert-warning" style="margin-bottom: 2rem;">
+                <strong>📖 Slik bruker du appen:</strong><br>
+                1️⃣ Velg mappe med source-filer (PS1, EXE, MSI, etc.)<br>
+                2️⃣ Dobbeltsjekk automatisk utfylt informasjon (spesielt Type og Install Behavior)<br>
+                3️⃣ Klikk "Vis dokumentasjon" for å se resultatet<br>
+                4️⃣ Kopier dokumentasjonen og legg den sammen med pakken din
+            </div>
+
             <div id="contentArea" style="display: none;">
+                <div class="alert alert-info">
+                    <strong>📂 Valgt mappe:</strong> <span id="folderPath"></span>
+                </div>
+
                 <div class="stats">
                     <div class="stat-card"><div class="stat-value" id="totalFiles">0</div><div class="stat-label">Filer</div></div>
                     <div class="stat-card"><div class="stat-value" id="scriptCount">0</div><div class="stat-label">Scripts</div></div>
                     <div class="stat-card"><div class="stat-value" id="installerCount">0</div><div class="stat-label">Installere</div></div>
                     <div class="stat-card"><div class="stat-value" id="configCount">0</div><div class="stat-label">Config</div></div>
+                </div>
+
+                <!-- File Lists -->
+                <div id="fileListSection" style="margin-bottom: 1.5rem;"></div>
+
+                <!-- Extracted Info Box -->
+                <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                    <strong>📊 Automatisk hentet informasjon:</strong>
+                    <div id="extractedInfo" style="margin-top: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.875rem;"></div>
                 </div>
 
                 <div class="section-box">
@@ -118,20 +150,29 @@
     <script>
         let data = {scripts: [], installers: [], configs: []};
         let logPaths = {install: '', uninstall: ''};
+        let extractedInfo = {};
 
         document.getElementById('folderInput').addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             data = {scripts: [], installers: [], configs: []};
 
+            // Get folder name
+            if (files.length > 0) {
+                const path = files[0].webkitRelativePath.split('/');
+                document.getElementById('folderPath').textContent = path[0];
+            }
+
             for (const file of files) {
                 const ext = file.name.split('.').pop().toLowerCase();
+                const fileInfo = {name: file.name, size: file.size, path: file.webkitRelativePath || file.name};
+                
                 if (ext === 'ps1') {
                     const content = await file.text();
-                    data.scripts.push({name: file.name, content, logs: findLogs(content)});
+                    data.scripts.push({...fileInfo, content, logs: findLogs(content)});
                 } else if (['exe','msi','msix','intunewin'].includes(ext)) {
-                    data.installers.push({name: file.name});
+                    data.installers.push(fileInfo);
                 } else if (['json','xml','txt'].includes(ext)) {
-                    data.configs.push({name: file.name});
+                    data.configs.push(fileInfo);
                 }
             }
 
@@ -139,10 +180,61 @@
             document.getElementById('scriptCount').textContent = data.scripts.length;
             document.getElementById('installerCount').textContent = data.installers.length;
             document.getElementById('configCount').textContent = data.configs.length;
-            document.getElementById('contentArea').style.display = 'block';
-
+            
+            displayFiles();
             fillForm();
+            displayExtractedInfo();
+            
+            document.getElementById('contentArea').style.display = 'block';
         });
+
+        function displayFiles() {
+            let html = '';
+            
+            if (data.scripts.length > 0) {
+                html += '<div class="file-section"><div class="file-section-title">📜 PowerShell Scripts (' + data.scripts.length + ')</div><div class="file-grid">';
+                data.scripts.forEach(f => {
+                    html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            if (data.installers.length > 0) {
+                html += '<div class="file-section"><div class="file-section-title">📦 Installasjonsfiler (' + data.installers.length + ')</div><div class="file-grid">';
+                data.installers.forEach(f => {
+                    html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            if (data.configs.length > 0) {
+                html += '<div class="file-section"><div class="file-section-title">⚙️ Konfigurasjonsfiler (' + data.configs.length + ')</div><div class="file-grid">';
+                data.configs.forEach(f => {
+                    html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            document.getElementById('fileListSection').innerHTML = html;
+        }
+
+        function displayExtractedInfo() {
+            let info = [];
+            
+            if (extractedInfo.nameSource) info.push(`✅ Pakkenavn: "${extractedInfo.name}" fra ${extractedInfo.nameSource}`);
+            if (extractedInfo.versionSource) info.push(`✅ Versjon: "${extractedInfo.version}" fra ${extractedInfo.versionSource}`);
+            if (extractedInfo.typeSource) info.push(`✅ Type: "${extractedInfo.type}" (${extractedInfo.typeSource})`);
+            if (extractedInfo.installCmd) info.push(`✅ Install kommando: generert fra ${extractedInfo.installCmd}`);
+            if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall kommando: generert fra ${extractedInfo.uninstallCmd}`);
+            if (extractedInfo.logInstall) info.push(`✅ Install loggsti: ${extractedInfo.logInstall}`);
+            if (extractedInfo.logUninstall) info.push(`✅ Uninstall loggsti: ${extractedInfo.logUninstall}`);
+            
+            if (info.length === 0) {
+                info.push('ℹ️ Ingen informasjon kunne hentes automatisk - fyll ut manuelt');
+            }
+            
+            document.getElementById('extractedInfo').innerHTML = info.join('<br>');
+        }
 
         function findLogs(c) {
             const logs = [];
@@ -152,19 +244,68 @@
         }
 
         function fillForm() {
+            extractedInfo = {};
             const deploy = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
-            let name = '', ver = '1.0', desc = '';
+            let name = '', ver = '1.0', type = '';
 
             if (deploy) {
                 const vM = deploy.content.match(/\$appVendor\s*=\s*['"]([^'"]+)['"]/i);
                 const nM = deploy.content.match(/\$appName\s*=\s*['"]([^'"]+)['"]/i);
                 const vV = deploy.content.match(/\$appVersion\s*=\s*['"]([^'"]+)['"]/i);
-                if (vM && nM) name = `${vM[1]} ${nM[1]}`;
-                if (vV) ver = vV[1];
+                
+                if (vM && nM) {
+                    name = `${vM[1]} ${nM[1]}`;
+                    extractedInfo.name = name;
+                    extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor + $appName)';
+                }
+                if (vV) {
+                    ver = vV[1];
+                    extractedInfo.version = ver;
+                    extractedInfo.versionSource = 'Deploy-Application.ps1 ($appVersion)';
+                }
+                
+                type = 'Win32: PSADT';
+                extractedInfo.type = 'Win32: PSADT';
+                extractedInfo.typeSource = 'Deploy-Application.ps1 funnet';
+            } else {
+                // Detect based on file types present
+                if (data.installers.some(f => f.name.toLowerCase().endsWith('.msix'))) {
+                    type = 'Win32: MSIX';
+                    extractedInfo.type = type;
+                    extractedInfo.typeSource = 'MSIX-fil funnet';
+                } else if (data.installers.some(f => f.name.toLowerCase().endsWith('.msi'))) {
+                    type = 'Win32: MSI';
+                    extractedInfo.type = type;
+                    extractedInfo.typeSource = 'MSI-fil funnet';
+                } else if (data.installers.some(f => f.name.toLowerCase().endsWith('.exe'))) {
+                    type = 'Win32: EXE';
+                    extractedInfo.type = type;
+                    extractedInfo.typeSource = 'EXE-fil funnet';
+                } else if (data.scripts.length > 0 && data.installers.length === 0) {
+                    // Only scripts, no installers
+                    type = 'Win32: PowerShell';
+                    extractedInfo.type = type;
+                    extractedInfo.typeSource = 'Bare PowerShell-filer funnet';
+                } else {
+                    type = 'Win32: EXE';
+                    extractedInfo.type = type;
+                    extractedInfo.typeSource = 'Default (ingen spesifikk installer funnet)';
+                }
+                
+                // Try to extract from install script name
+                const install = data.scripts.find(s => s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall'));
+                if (install) {
+                    const match = install.name.match(/Install-(.+?)\.ps1/i);
+                    if (match) {
+                        name = match[1].replace(/([A-Z])/g, ' $1').trim();
+                        extractedInfo.name = name;
+                        extractedInfo.nameSource = install.name + ' (filnavn)';
+                    }
+                }
             }
 
             document.getElementById('name').value = name;
-            document.getElementById('type').value = deploy ? 'Win32: PSADT' : 'Win32: EXE';
+            document.getElementById('type').value = type;
             document.getElementById('version').value = ver;
 
             const install = data.scripts.find(s => s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall'));
@@ -173,12 +314,18 @@
             if (deploy) {
                 document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"';
                 document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "Silent"';
+                extractedInfo.installCmd = 'PSADT standard kommando';
+                extractedInfo.uninstallCmd = 'PSADT standard kommando';
             } else if (install) {
                 document.getElementById('installCommand').value = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\${install.name}`;
-                if (uninstall) document.getElementById('uninstallCommand').value = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\${uninstall.name}`;
+                extractedInfo.installCmd = install.name;
+                if (uninstall) {
+                    document.getElementById('uninstallCommand').value = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\${uninstall.name}`;
+                    extractedInfo.uninstallCmd = uninstall.name;
+                }
             }
 
-            document.getElementById('dependencies').value = '- Windows 10 22H2 or newer\n- System context required';
+            document.getElementById('dependencies').value = '- Windows 10 22H2 or newer';
             document.getElementById('notes').value = '- No reboot required';
 
             extractLogPaths();
@@ -189,8 +336,13 @@
                 if (s.logs.length > 0) {
                     let log = s.logs[0];
                     if (!log.includes('\\')) log = 'C:\\ProgramData\\IntuneLogs\\' + log;
-                    if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) logPaths.install = log;
-                    else if (s.name.toLowerCase().includes('uninstall')) logPaths.uninstall = log;
+                    if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
+                        logPaths.install = log;
+                        extractedInfo.logInstall = `${log} (fra ${s.name})`;
+                    } else if (s.name.toLowerCase().includes('uninstall')) {
+                        logPaths.uninstall = log;
+                        extractedInfo.logUninstall = `${log} (fra ${s.name})`;
+                    }
                 }
             });
         }
