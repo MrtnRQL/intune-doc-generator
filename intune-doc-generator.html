@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intune Dokumentasjonsgenerator</title>
+    <title>Intune Documentation Generator</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -50,39 +50,39 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator</h1>
+            <h1 class="title">📁 Intune Apps - Documentation Generator</h1>
             <p style="font-style: italic; color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem;">
                 "Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake." — Unknown IT Legend
             </p>
 
             <label class="folder-zone">
                 <div style="font-size: 4rem;">📂</div>
-                <div style="font-size: 1.25rem; font-weight: 600; color: #4f46e5;">Velg mappe</div>
+                <div style="font-size: 1.25rem; font-weight: 600; color: #4f46e5;">Select Folder</div>
                 <input type="file" id="folderInput" webkitdirectory directory multiple>
             </label>
 
             <div class="alert alert-info" style="margin-bottom: 2rem;">
-                <strong>🔒 Personvern:</strong> Alle filer behandles kun i din nettleser. Ingenting lastes opp til servere. 
-                Alt skjer lokalt på din PC og slettes når du lukker siden.
+                <strong>🔒 Privacy:</strong> All files are processed only in your browser. Nothing is uploaded to servers. 
+                Everything happens locally on your PC and is deleted when you close the page.
             </div>
 
             <div class="alert alert-warning" style="margin-bottom: 2rem;">
-                <strong>📖 Slik bruker du appen:</strong><br>
-                1️⃣ Velg mappe med source-filer (PS1, EXE, MSI, etc.)<br>
-                2️⃣ Dobbeltsjekk automatisk utfylt informasjon (spesielt Type og Install Behavior)<br>
-                3️⃣ Klikk "Vis dokumentasjon" for å se resultatet<br>
-                4️⃣ Kopier dokumentasjonen og legg den sammen med pakken din
+                <strong>📖 How to use the app:</strong><br>
+                1️⃣ Select folder with source files (PS1, EXE, MSI, etc.)<br>
+                2️⃣ Double-check auto-filled information (especially Type and Install Behavior)<br>
+                3️⃣ Click "Show Documentation" to see the result<br>
+                4️⃣ Copy the documentation and include it with your package
             </div>
 
             <div id="contentArea" style="display: none;">
                 <div class="alert alert-info">
-                    <strong>📂 Valgt mappe:</strong> <span id="folderPath"></span>
+                    <strong>📂 Selected folder:</strong> <span id="folderPath"></span>
                 </div>
 
                 <div class="stats">
-                    <div class="stat-card"><div class="stat-value" id="totalFiles">0</div><div class="stat-label">Filer</div></div>
+                    <div class="stat-card"><div class="stat-value" id="totalFiles">0</div><div class="stat-label">Files</div></div>
                     <div class="stat-card"><div class="stat-value" id="scriptCount">0</div><div class="stat-label">Scripts</div></div>
-                    <div class="stat-card"><div class="stat-value" id="installerCount">0</div><div class="stat-label">Installere</div></div>
+                    <div class="stat-card"><div class="stat-value" id="installerCount">0</div><div class="stat-label">Installers</div></div>
                     <div class="stat-card"><div class="stat-value" id="configCount">0</div><div class="stat-label">Config</div></div>
                 </div>
 
@@ -91,17 +91,17 @@
 
                 <!-- Extracted Info Box -->
                 <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                    <strong>📊 Automatisk hentet informasjon:</strong>
+                    <strong>📊 Automatically extracted information:</strong>
                     <div id="extractedInfo" style="margin-top: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.875rem;"></div>
                 </div>
 
                 <div class="section-box">
-                    <h3 class="section-header">⚙️ Pakkeinformasjon</h3>
+                    <h3 class="section-header">⚙️ Package Information</h3>
                     <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                        <strong>⚠️ Viktig:</strong> Sjekk Type, Install Behavior, Beskrivelse og Eier
+                        <strong>⚠️ Important:</strong> Check Type, Install Behavior, Description and Owner
                     </div>
                     <div class="form-grid">
-                        <div><label class="form-label">Pakkenavn *</label><input type="text" id="name" class="form-input" placeholder="F.eks: Adobe Reader DC"></div>
+                        <div><label class="form-label">Package Name *</label><input type="text" id="name" class="form-input" placeholder="E.g: Adobe Reader DC"></div>
                         <div><label class="form-label">Type</label>
                             <select id="type" class="form-select">
                                 <option>Win32: PSADT</option>
@@ -113,21 +113,21 @@
                                 <option>Win32: Hybrid</option>
                             </select>
                         </div>
-                        <div><label class="form-label">Versjon</label><input type="text" id="version" class="form-input" placeholder="F.eks: 24.1.0"></div>
-                        <div><label class="form-label">Eier</label><input type="text" id="owner" class="form-input" placeholder="F.eks: IT-avdelingen"></div>
-                        <div class="col-span-2"><label class="form-label">Beskrivelse</label><textarea id="description" class="form-textarea" rows="3" placeholder="Beskriv hva applikasjonen gjør og hvem den er for"></textarea></div>
+                        <div><label class="form-label">Version</label><input type="text" id="version" class="form-input" placeholder="E.g: 24.1.0"></div>
+                        <div><label class="form-label">Owner</label><input type="text" id="owner" class="form-input" placeholder="E.g: IT Department"></div>
+                        <div class="col-span-2"><label class="form-label">Description</label><textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea></div>
                         <div class="col-span-2">
                             <label class="form-label">Install Behavior *</label>
                             <select id="installBehavior" class="form-select">
-                                <option value="">-- Velg --</option>
+                                <option value="">-- Select --</option>
                                 <option value="System">System</option>
                                 <option value="User">User</option>
                             </select>
                         </div>
-                        <div class="col-span-2"><label class="form-label">Installasjonskommando</label><input type="text" id="installCommand" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Avinstallasjonskommando</label><input type="text" id="uninstallCommand" class="form-input"></div>
+                        <div class="col-span-2"><label class="form-label">Installation Command</label><input type="text" id="installCommand" class="form-input"></div>
+                        <div class="col-span-2"><label class="form-label">Uninstallation Command</label><input type="text" id="uninstallCommand" class="form-input"></div>
                         <div class="col-span-2">
-                            <label class="form-label">Deteksjonsmetode</label>
+                            <label class="form-label">Detection Method</label>
                             <select id="detectMethod" class="form-select" onchange="toggleDetectDetails()">
                                 <option value="Custom Script">Custom Script</option>
                                 <option value="File">File</option>
@@ -136,29 +136,29 @@
                             </select>
                         </div>
                         <div class="col-span-2" id="detectScriptContainer">
-                            <label class="form-label">Deteksjonsskript</label>
-                            <input type="text" id="detectScript" class="form-input" placeholder="F.eks: Detect-Application.ps1">
+                            <label class="form-label">Detection Script</label>
+                            <input type="text" id="detectScript" class="form-input" placeholder="E.g: Detect-Application.ps1">
                         </div>
                         <div class="col-span-2" id="detectDetailsContainer" style="display: none;">
-                            <label class="form-label" id="detectDetailsLabel">Deteksjonsdetaljer</label>
-                            <textarea id="detectDetails" class="form-textarea" rows="2" placeholder="Skriv inn deteksjonsdetaljer"></textarea>
+                            <label class="form-label" id="detectDetailsLabel">Detection Details</label>
+                            <textarea id="detectDetails" class="form-textarea" rows="2" placeholder="Enter detection details"></textarea>
                         </div>
-                        <div class="col-span-2"><label class="form-label">Avhengigheter</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="F.eks: .NET Framework 4.8 eller høyere"></textarea></div>
-                        <div class="col-span-2"><label class="form-label">Notater</label><textarea id="notes" class="form-textarea" rows="2" placeholder="F.eks: Ingen omstart nødvendig"></textarea></div>
+                        <div class="col-span-2"><label class="form-label">Dependencies</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="E.g: .NET Framework 4.8 or higher"></textarea></div>
+                        <div class="col-span-2"><label class="form-label">Notes</label><textarea id="notes" class="form-textarea" rows="2" placeholder="E.g: No reboot required"></textarea></div>
                     </div>
                 </div>
 
                 <div style="text-align: center;">
-                    <button class="btn btn-primary" onclick="togglePreview()">📄 Vis dokumentasjon</button>
+                    <button class="btn btn-primary" onclick="togglePreview()">📄 Show Documentation</button>
                 </div>
 
                 <div id="previewBox" class="preview-box" style="display: none;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <h3 style="margin: 0;">📄 Dokumentasjon</h3>
-                        <button class="btn btn-success" onclick="copyDoc()">📋 Kopier</button>
+                        <h3 style="margin: 0;">📄 Documentation</h3>
+                        <button class="btn btn-success" onclick="copyDoc()">📋 Copy</button>
                     </div>
                     <div class="preview-content" id="previewContent"></div>
-                    <div id="copySuccess" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #d1fae5; color: #065f46; border-radius: 0.375rem; text-align: center;">✅ Kopiert!</div>
+                    <div id="copySuccess" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #d1fae5; color: #065f46; border-radius: 0.375rem; text-align: center;">✅ Copied!</div>
                 </div>
             </div>
         </div>
@@ -217,7 +217,7 @@
             }
             
             if (data.installers.length > 0) {
-                html += '<div class="file-section"><div class="file-section-title">📦 Installasjonsfiler (' + data.installers.length + ')</div><div class="file-grid">';
+                html += '<div class="file-section"><div class="file-section-title">📦 Installation Files (' + data.installers.length + ')</div><div class="file-grid">';
                 data.installers.forEach(f => {
                     html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
                 });
@@ -225,7 +225,7 @@
             }
             
             if (data.configs.length > 0) {
-                html += '<div class="file-section"><div class="file-section-title">⚙️ Konfigurasjonsfiler (' + data.configs.length + ')</div><div class="file-grid">';
+                html += '<div class="file-section"><div class="file-section-title">⚙️ Configuration Files (' + data.configs.length + ')</div><div class="file-grid">';
                 data.configs.forEach(f => {
                     html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
                 });
@@ -238,16 +238,16 @@
         function displayExtractedInfo() {
             let info = [];
             
-            if (extractedInfo.nameSource) info.push(`✅ Pakkenavn: "${extractedInfo.name}" fra ${extractedInfo.nameSource}`);
-            if (extractedInfo.versionSource) info.push(`✅ Versjon: "${extractedInfo.version}" fra ${extractedInfo.versionSource}`);
+            if (extractedInfo.nameSource) info.push(`✅ Package name: "${extractedInfo.name}" from ${extractedInfo.nameSource}`);
+            if (extractedInfo.versionSource) info.push(`✅ Version: "${extractedInfo.version}" from ${extractedInfo.versionSource}`);
             if (extractedInfo.typeSource) info.push(`✅ Type: "${extractedInfo.type}" (${extractedInfo.typeSource})`);
-            if (extractedInfo.installCmd) info.push(`✅ Install kommando: generert fra ${extractedInfo.installCmd}`);
-            if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall kommando: generert fra ${extractedInfo.uninstallCmd}`);
-            if (extractedInfo.logInstall) info.push(`✅ Install loggsti: ${extractedInfo.logInstall}`);
-            if (extractedInfo.logUninstall) info.push(`✅ Uninstall loggsti: ${extractedInfo.logUninstall}`);
+            if (extractedInfo.installCmd) info.push(`✅ Install command: generated from ${extractedInfo.installCmd}`);
+            if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall command: generated from ${extractedInfo.uninstallCmd}`);
+            if (extractedInfo.logInstall) info.push(`✅ Install log path: ${extractedInfo.logInstall}`);
+            if (extractedInfo.logUninstall) info.push(`✅ Uninstall log path: ${extractedInfo.logUninstall}`);
             
             if (info.length === 0) {
-                info.push('ℹ️ Ingen informasjon kunne hentes automatisk - fyll ut manuelt');
+                info.push('ℹ️ No information could be extracted automatically - fill in manually');
             }
             
             document.getElementById('extractedInfo').innerHTML = info.join('<br>');
@@ -283,30 +283,30 @@
                 
                 type = 'Win32: PSADT';
                 extractedInfo.type = 'Win32: PSADT';
-                extractedInfo.typeSource = 'Deploy-Application.ps1 funnet';
+                extractedInfo.typeSource = 'Deploy-Application.ps1 found';
             } else {
                 // Detect based on file types present
                 if (data.installers.some(f => f.name.toLowerCase().endsWith('.msix'))) {
                     type = 'Win32: MSIX';
                     extractedInfo.type = type;
-                    extractedInfo.typeSource = 'MSIX-fil funnet';
+                    extractedInfo.typeSource = 'MSIX file found';
                 } else if (data.installers.some(f => f.name.toLowerCase().endsWith('.msi'))) {
                     type = 'Win32: MSI';
                     extractedInfo.type = type;
-                    extractedInfo.typeSource = 'MSI-fil funnet';
+                    extractedInfo.typeSource = 'MSI file found';
                 } else if (data.installers.some(f => f.name.toLowerCase().endsWith('.exe'))) {
                     type = 'Win32: EXE';
                     extractedInfo.type = type;
-                    extractedInfo.typeSource = 'EXE-fil funnet';
+                    extractedInfo.typeSource = 'EXE file found';
                 } else if (data.scripts.length > 0 && data.installers.length === 0) {
                     // Only scripts, no installers
                     type = 'Win32: PowerShell';
                     extractedInfo.type = type;
-                    extractedInfo.typeSource = 'Bare PowerShell-filer funnet';
+                    extractedInfo.typeSource = 'Only PowerShell files found';
                 } else {
                     type = 'Win32: EXE';
                     extractedInfo.type = type;
-                    extractedInfo.typeSource = 'Default (ingen spesifikk installer funnet)';
+                    extractedInfo.typeSource = 'Default (no specific installer found)';
                 }
                 
                 // Try to extract from install script name
@@ -316,7 +316,7 @@
                     if (match) {
                         name = match[1].replace(/([A-Z])/g, ' $1').trim();
                         extractedInfo.name = name;
-                        extractedInfo.nameSource = install.name + ' (filnavn)';
+                        extractedInfo.nameSource = install.name + ' (filename)';
                     }
                 }
             }
@@ -331,8 +331,8 @@
             if (deploy) {
                 document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"';
                 document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "Silent"';
-                extractedInfo.installCmd = 'PSADT standard kommando';
-                extractedInfo.uninstallCmd = 'PSADT standard kommando';
+                extractedInfo.installCmd = 'PSADT standard command';
+                extractedInfo.uninstallCmd = 'PSADT standard command';
             } else if (install) {
                 document.getElementById('installCommand').value = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\${install.name}`;
                 extractedInfo.installCmd = install.name;
@@ -355,10 +355,10 @@
                     if (!log.includes('\\')) log = 'C:\\ProgramData\\IntuneLogs\\' + log;
                     if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
                         logPaths.install = log;
-                        extractedInfo.logInstall = `${log} (fra ${s.name})`;
+                        extractedInfo.logInstall = `${log} (from ${s.name})`;
                     } else if (s.name.toLowerCase().includes('uninstall')) {
                         logPaths.uninstall = log;
-                        extractedInfo.logUninstall = `${log} (fra ${s.name})`;
+                        extractedInfo.logUninstall = `${log} (from ${s.name})`;
                     }
                 }
             });
@@ -379,14 +379,14 @@
                 
                 // Update label based on method
                 if (method === 'File') {
-                    label.textContent = 'Filsti og navn';
-                    document.getElementById('detectDetails').placeholder = 'F.eks: C:\\Program Files\\Adobe\\Reader\\AcroRd32.exe';
+                    label.textContent = 'File path and name';
+                    document.getElementById('detectDetails').placeholder = 'E.g: C:\\Program Files\\Adobe\\Reader\\AcroRd32.exe';
                 } else if (method === 'Registry') {
-                    label.textContent = 'Registry-sti og verdi';
-                    document.getElementById('detectDetails').placeholder = 'F.eks: HKLM\\SOFTWARE\\Adobe\\Acrobat Reader\\Version';
+                    label.textContent = 'Registry path and value';
+                    document.getElementById('detectDetails').placeholder = 'E.g: HKLM\\SOFTWARE\\Adobe\\Acrobat Reader\\Version';
                 } else if (method === 'MSI') {
                     label.textContent = 'MSI Product Code';
-                    document.getElementById('detectDetails').placeholder = 'F.eks: {AC76BA86-7AD7-1033-7B44-AC0F074E4100}';
+                    document.getElementById('detectDetails').placeholder = 'E.g: {AC76BA86-7AD7-1033-7B44-AC0F074E4100}';
                 }
             }
         }
