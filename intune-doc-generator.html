@@ -50,7 +50,7 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator v2</h1>
+            <h1 class="title">📁 Intune Apps - Dokumentasjonsgenerator</h1>
             <p style="font-style: italic; color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem;">
                 "Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake." — Unknown IT Legend
             </p>
@@ -126,8 +126,23 @@
                         </div>
                         <div class="col-span-2"><label class="form-label">Installasjonskommando</label><input type="text" id="installCommand" class="form-input"></div>
                         <div class="col-span-2"><label class="form-label">Avinstallasjonskommando</label><input type="text" id="uninstallCommand" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Deteksjonsmetode</label><textarea id="detectMethod" class="form-textarea" rows="2" placeholder="F.eks: Fil eller register-basert deteksjon"></textarea></div>
-                        <div class="col-span-2"><label class="form-label">Deteksjonsskript</label><input type="text" id="detectScript" class="form-input" placeholder="F.eks: Detect-Application.ps1"></div>
+                        <div class="col-span-2">
+                            <label class="form-label">Deteksjonsmetode</label>
+                            <select id="detectMethod" class="form-select" onchange="toggleDetectDetails()">
+                                <option value="Custom Script">Custom Script</option>
+                                <option value="File">File</option>
+                                <option value="Registry">Registry</option>
+                                <option value="MSI">MSI</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2" id="detectScriptContainer">
+                            <label class="form-label">Deteksjonsskript</label>
+                            <input type="text" id="detectScript" class="form-input" placeholder="F.eks: Detect-Application.ps1">
+                        </div>
+                        <div class="col-span-2" id="detectDetailsContainer" style="display: none;">
+                            <label class="form-label" id="detectDetailsLabel">Deteksjonsdetaljer</label>
+                            <textarea id="detectDetails" class="form-textarea" rows="2" placeholder="Skriv inn deteksjonsdetaljer"></textarea>
+                        </div>
                         <div class="col-span-2"><label class="form-label">Avhengigheter</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="F.eks: .NET Framework 4.8 eller høyere"></textarea></div>
                         <div class="col-span-2"><label class="form-label">Notater</label><textarea id="notes" class="form-textarea" rows="2" placeholder="F.eks: Ingen omstart nødvendig"></textarea></div>
                     </div>
@@ -349,6 +364,33 @@
             });
         }
 
+        function toggleDetectDetails() {
+            const method = document.getElementById('detectMethod').value;
+            const detailsContainer = document.getElementById('detectDetailsContainer');
+            const scriptContainer = document.getElementById('detectScriptContainer');
+            const label = document.getElementById('detectDetailsLabel');
+            
+            if (method === 'Custom Script') {
+                detailsContainer.style.display = 'none';
+                scriptContainer.style.display = 'block';
+            } else {
+                detailsContainer.style.display = 'block';
+                scriptContainer.style.display = 'none';
+                
+                // Update label based on method
+                if (method === 'File') {
+                    label.textContent = 'Filsti og navn';
+                    document.getElementById('detectDetails').placeholder = 'F.eks: C:\\Program Files\\Adobe\\Reader\\AcroRd32.exe';
+                } else if (method === 'Registry') {
+                    label.textContent = 'Registry-sti og verdi';
+                    document.getElementById('detectDetails').placeholder = 'F.eks: HKLM\\SOFTWARE\\Adobe\\Acrobat Reader\\Version';
+                } else if (method === 'MSI') {
+                    label.textContent = 'MSI Product Code';
+                    document.getElementById('detectDetails').placeholder = 'F.eks: {AC76BA86-7AD7-1033-7B44-AC0F074E4100}';
+                }
+            }
+        }
+
         function togglePreview() {
             const box = document.getElementById('previewBox');
             if (box.style.display === 'none') {
@@ -362,6 +404,18 @@
         function genDoc() {
             const d = new Date().toISOString().split('T')[0];
             const ib = document.getElementById('installBehavior').value || 'Not specified';
+            const detectMethod = document.getElementById('detectMethod').value;
+            const detectDetails = document.getElementById('detectDetails').value;
+            const detectScript = document.getElementById('detectScript').value;
+            
+            let detectionText = detectMethod;
+            if (detectMethod !== 'Custom Script' && detectDetails) {
+                detectionText += '\n' + detectDetails;
+            }
+            if (detectScript) {
+                detectionText += '\nScript: ' + detectScript;
+            }
+            
             return `Name:  
 ${document.getElementById('name').value || '[Insert]'}
 
@@ -396,7 +450,7 @@ ${logPaths.uninstall ? '\nUninstall log: ' + logPaths.uninstall : ''}
 
 
 Detection:  
-${document.getElementById('detectMethod').value || 'PowerShell script'}
+${detectionText}
 
 
 Dependencies:  
@@ -419,4 +473,3 @@ ${document.getElementById('notes').value}
     </script>
 </body>
 </html>
-
