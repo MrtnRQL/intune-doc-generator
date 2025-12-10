@@ -21,18 +21,19 @@
         .lang-btn { 
             background: white; 
             border: 2px solid #e5e7eb; 
-            border-radius: 0.5rem; 
-            padding: 0.5rem 0.75rem; 
-            font-size: 2rem; 
+            border-radius: 0.375rem; 
+            padding: 0.375rem 0.75rem; 
+            font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer; 
             transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            line-height: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: #374151;
         }
         .lang-btn:hover { 
-            border-color: #6366f1; 
-            transform: translateY(-2px) scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: #6366f1;
+            background: #f9fafb;
+            color: #4f46e5;
         }
         .card { background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 1.5rem; }
         .title { font-size: 2rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
@@ -73,11 +74,11 @@
     <div class="container">
         <!-- Language Switcher -->
         <div class="lang-switcher">
-            <button onclick="switchLanguage('no')" id="langNO" class="lang-btn" title="Switch to Norwegian">
-                🇳🇴
+            <button onclick="switchLanguage('no')" id="langNO" class="lang-btn" title="Bytt til norsk">
+                Norsk
             </button>
             <button onclick="switchLanguage('en')" id="langEN" class="lang-btn" style="display: none;" title="Switch to English">
-                🇬🇧
+                English
             </button>
         </div>
         
@@ -260,7 +261,7 @@
             },
             no: {
                 mainTitle: '📁 Intune Apps - Dokumentasjonsgenerator',
-                quoteText: '"Kode forteller hvordan. Dokumentasjon forteller hvorfor. Ditt fremtidige jeg vil takke deg, og kollegene dine vil gi deg kake." — Ukjent IT-legende',
+                quoteText: '"Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake." — Unknown IT Legend',
                 selectFolderText: 'Velg mappe',
                 privacyTitle: '🔒 Personvern:',
                 privacyText: 'Alle filer behandles kun i nettleseren din. Ingenting lastes opp til servere. Alt skjer lokalt på din PC og slettes når du lukker siden.',
