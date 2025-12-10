@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intune Documentation Generator</title>
+    
+    <!-- GoatCounter Analytics (Privacy-friendly, no cookies) -->
+    <script data-goatcounter="https://mrtnrql.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -11,7 +16,24 @@
             background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
             min-height: 100vh; padding: 1.5rem;
         }
-        .container { max-width: 80rem; margin: 0 auto; }
+        .container { max-width: 80rem; margin: 0 auto; position: relative; }
+        .lang-switcher { position: absolute; top: 0; right: 0; z-index: 1000; }
+        .lang-btn { 
+            background: white; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 0.75rem; 
+            font-size: 2rem; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+        }
+        .lang-btn:hover { 
+            border-color: #6366f1; 
+            transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
         .card { background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 1.5rem; }
         .title { font-size: 2rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
         .subtitle { color: #6b7280; margin-bottom: 2rem; }
@@ -49,41 +71,50 @@
 </head>
 <body>
     <div class="container">
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+            <button onclick="switchLanguage('no')" id="langNO" class="lang-btn" title="Switch to Norwegian">
+                🇳🇴
+            </button>
+            <button onclick="switchLanguage('en')" id="langEN" class="lang-btn" style="display: none;" title="Switch to English">
+                🇬🇧
+            </button>
+        </div>
+        
         <div class="card">
-            <h1 class="title">📁 Intune Apps - Documentation Generator</h1>
-            <p style="font-style: italic; color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem;">
+            <h1 class="title" id="mainTitle">📁 Intune Apps - Documentation Generator</h1>
+            <p style="font-style: italic; color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem;" id="quoteText">
                 "Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake." — Unknown IT Legend
             </p>
 
             <label class="folder-zone">
                 <div style="font-size: 4rem;">📂</div>
-                <div style="font-size: 1.25rem; font-weight: 600; color: #4f46e5;">Select Folder</div>
+                <div style="font-size: 1.25rem; font-weight: 600; color: #4f46e5;" id="selectFolderText">Select Folder</div>
                 <input type="file" id="folderInput" webkitdirectory directory multiple>
             </label>
 
             <div class="alert alert-info" style="margin-bottom: 2rem;">
-                <strong>🔒 Privacy:</strong> All files are processed only in your browser. Nothing is uploaded to servers. 
-                Everything happens locally on your PC and is deleted when you close the page.
+                <strong id="privacyTitle">🔒 Privacy:</strong> <span id="privacyText">All files are processed only in your browser. Nothing is uploaded to servers. Everything happens locally on your PC and is deleted when you close the page.</span>
             </div>
 
             <div class="alert alert-warning" style="margin-bottom: 2rem;">
-                <strong>📖 How to use the app:</strong><br>
-                1️⃣ Select folder with source files (PS1, EXE, MSI, etc.)<br>
-                2️⃣ Double-check auto-filled information (especially Type and Install Behavior)<br>
-                3️⃣ Click "Show Documentation" to see the result<br>
-                4️⃣ Copy the documentation and include it with your package
+                <strong id="howToTitle">📖 How to use the app:</strong><br>
+                <span id="howToStep1">1️⃣ Select folder with source files (PS1, EXE, MSI, etc.)</span><br>
+                <span id="howToStep2">2️⃣ Double-check auto-filled information (especially Type and Install Behavior)</span><br>
+                <span id="howToStep3">3️⃣ Click "Show Documentation" to see the result</span><br>
+                <span id="howToStep4">4️⃣ Copy the documentation and include it with your package</span>
             </div>
 
             <div id="contentArea" style="display: none;">
                 <div class="alert alert-info">
-                    <strong>📂 Selected folder:</strong> <span id="folderPath"></span>
+                    <strong id="selectedFolderLabel">📂 Selected folder:</strong> <span id="folderPath"></span>
                 </div>
 
                 <div class="stats">
-                    <div class="stat-card"><div class="stat-value" id="totalFiles">0</div><div class="stat-label">Files</div></div>
-                    <div class="stat-card"><div class="stat-value" id="scriptCount">0</div><div class="stat-label">Scripts</div></div>
-                    <div class="stat-card"><div class="stat-value" id="installerCount">0</div><div class="stat-label">Installers</div></div>
-                    <div class="stat-card"><div class="stat-value" id="configCount">0</div><div class="stat-label">Config</div></div>
+                    <div class="stat-card"><div class="stat-value" id="totalFiles">0</div><div class="stat-label" id="statFiles">Files</div></div>
+                    <div class="stat-card"><div class="stat-value" id="scriptCount">0</div><div class="stat-label" id="statScripts">Scripts</div></div>
+                    <div class="stat-card"><div class="stat-value" id="installerCount">0</div><div class="stat-label" id="statInstallers">Installers</div></div>
+                    <div class="stat-card"><div class="stat-value" id="configCount">0</div><div class="stat-label" id="statConfig">Config</div></div>
                 </div>
 
                 <!-- File Lists -->
@@ -91,18 +122,18 @@
 
                 <!-- Extracted Info Box -->
                 <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                    <strong>📊 Automatically extracted information:</strong>
+                    <strong id="extractedInfoTitle">📊 Automatically extracted information:</strong>
                     <div id="extractedInfo" style="margin-top: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.875rem;"></div>
                 </div>
 
                 <div class="section-box">
-                    <h3 class="section-header">⚙️ Package Information</h3>
+                    <h3 class="section-header" id="packageInfoTitle">⚙️ Package Information</h3>
                     <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                        <strong>⚠️ Important:</strong> Check Type, Install Behavior, Description and Owner
+                        <strong id="importantWarning">⚠️ Important:</strong> <span id="importantText">Check Type, Install Behavior, Description and Owner</span>
                     </div>
                     <div class="form-grid">
-                        <div><label class="form-label">Package Name *</label><input type="text" id="name" class="form-input" placeholder="E.g: Adobe Reader DC"></div>
-                        <div><label class="form-label">Type</label>
+                        <div><label class="form-label" id="labelPackageName">Package Name *</label><input type="text" id="name" class="form-input" placeholder="E.g: Adobe Reader DC"></div>
+                        <div><label class="form-label" id="labelType">Type</label>
                             <select id="type" class="form-select">
                                 <option>Win32: PSADT</option>
                                 <option>Win32: MSI</option>
@@ -113,21 +144,21 @@
                                 <option>Win32: Hybrid</option>
                             </select>
                         </div>
-                        <div><label class="form-label">Version</label><input type="text" id="version" class="form-input" placeholder="E.g: 24.1.0"></div>
-                        <div><label class="form-label">Owner</label><input type="text" id="owner" class="form-input" placeholder="E.g: IT Department"></div>
-                        <div class="col-span-2"><label class="form-label">Description</label><textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea></div>
+                        <div><label class="form-label" id="labelVersion">Version</label><input type="text" id="version" class="form-input" placeholder="E.g: 24.1.0"></div>
+                        <div><label class="form-label" id="labelOwner">Owner</label><input type="text" id="owner" class="form-input" placeholder="E.g: IT Department"></div>
+                        <div class="col-span-2"><label class="form-label" id="labelDescription">Description</label><textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea></div>
                         <div class="col-span-2">
-                            <label class="form-label">Install Behavior *</label>
+                            <label class="form-label" id="labelInstallBehavior">Install Behavior *</label>
                             <select id="installBehavior" class="form-select">
                                 <option value="">-- Select --</option>
                                 <option value="System">System</option>
                                 <option value="User">User</option>
                             </select>
                         </div>
-                        <div class="col-span-2"><label class="form-label">Installation Command</label><input type="text" id="installCommand" class="form-input"></div>
-                        <div class="col-span-2"><label class="form-label">Uninstallation Command</label><input type="text" id="uninstallCommand" class="form-input"></div>
+                        <div class="col-span-2"><label class="form-label" id="labelInstallCommand">Installation Command</label><input type="text" id="installCommand" class="form-input"></div>
+                        <div class="col-span-2"><label class="form-label" id="labelUninstallCommand">Uninstallation Command</label><input type="text" id="uninstallCommand" class="form-input"></div>
                         <div class="col-span-2">
-                            <label class="form-label">Detection Method</label>
+                            <label class="form-label" id="labelDetectionMethod">Detection Method</label>
                             <select id="detectMethod" class="form-select" onchange="toggleDetectDetails()">
                                 <option value="Custom Script">Custom Script</option>
                                 <option value="File">File</option>
@@ -136,35 +167,210 @@
                             </select>
                         </div>
                         <div class="col-span-2" id="detectScriptContainer">
-                            <label class="form-label">Detection Script</label>
+                            <label class="form-label" id="labelDetectionScript">Detection Script</label>
                             <input type="text" id="detectScript" class="form-input" placeholder="E.g: Detect-Application.ps1">
                         </div>
                         <div class="col-span-2" id="detectDetailsContainer" style="display: none;">
                             <label class="form-label" id="detectDetailsLabel">Detection Details</label>
                             <textarea id="detectDetails" class="form-textarea" rows="2" placeholder="Enter detection details"></textarea>
                         </div>
-                        <div class="col-span-2"><label class="form-label">Dependencies</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="E.g: .NET Framework 4.8 or higher"></textarea></div>
-                        <div class="col-span-2"><label class="form-label">Notes</label><textarea id="notes" class="form-textarea" rows="2" placeholder="E.g: No reboot required"></textarea></div>
+                        <div class="col-span-2"><label class="form-label" id="labelDependencies">Dependencies</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="E.g: .NET Framework 4.8 or higher"></textarea></div>
+                        <div class="col-span-2"><label class="form-label" id="labelNotes">Notes</label><textarea id="notes" class="form-textarea" rows="2" placeholder="E.g: No reboot required"></textarea></div>
                     </div>
                 </div>
 
                 <div style="text-align: center;">
-                    <button class="btn btn-primary" onclick="togglePreview()">📄 Show Documentation</button>
+                    <button class="btn btn-primary" onclick="togglePreview()" id="btnShowDoc">📄 Show Documentation</button>
                 </div>
 
                 <div id="previewBox" class="preview-box" style="display: none;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <h3 style="margin: 0;">📄 Documentation</h3>
-                        <button class="btn btn-success" onclick="copyDoc()">📋 Copy</button>
+                        <h3 style="margin: 0;" id="docTitle">📄 Documentation</h3>
+                        <button class="btn btn-success" onclick="copyDoc()" id="btnCopy">📋 Copy</button>
                     </div>
                     <div class="preview-content" id="previewContent"></div>
-                    <div id="copySuccess" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #d1fae5; color: #065f46; border-radius: 0.375rem; text-align: center;">✅ Copied!</div>
+                    <div id="copySuccess" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #d1fae5; color: #065f46; border-radius: 0.375rem; text-align: center;">✅ <span id="copiedText">Copied!</span></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Translation system
+        let currentLanguage = 'en';
+        
+        const translations = {
+            en: {
+                mainTitle: '📁 Intune Apps - Documentation Generator',
+                quoteText: '"Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake." — Unknown IT Legend',
+                selectFolderText: 'Select Folder',
+                privacyTitle: '🔒 Privacy:',
+                privacyText: 'All files are processed only in your browser. Nothing is uploaded to servers. Everything happens locally on your PC and is deleted when you close the page.',
+                howToTitle: '📖 How to use the app:',
+                howToStep1: '1️⃣ Select folder with source files (PS1, EXE, MSI, etc.)',
+                howToStep2: '2️⃣ Double-check auto-filled information (especially Type and Install Behavior)',
+                howToStep3: '3️⃣ Click "Show Documentation" to see the result',
+                howToStep4: '4️⃣ Copy the documentation and include it with your package',
+                selectedFolderLabel: '📂 Selected folder:',
+                statFiles: 'Files',
+                statScripts: 'Scripts',
+                statInstallers: 'Installers',
+                statConfig: 'Config',
+                extractedInfoTitle: '📊 Automatically extracted information:',
+                packageInfoTitle: '⚙️ Package Information',
+                importantWarning: '⚠️ Important:',
+                importantText: 'Check Type, Install Behavior, Description and Owner',
+                labelPackageName: 'Package Name *',
+                labelType: 'Type',
+                labelVersion: 'Version',
+                labelOwner: 'Owner',
+                labelDescription: 'Description',
+                labelInstallBehavior: 'Install Behavior *',
+                labelInstallCommand: 'Installation Command',
+                labelUninstallCommand: 'Uninstallation Command',
+                labelDetectionMethod: 'Detection Method',
+                labelDetectionScript: 'Detection Script',
+                labelDependencies: 'Dependencies',
+                labelNotes: 'Notes',
+                btnShowDoc: '📄 Show Documentation',
+                docTitle: '📄 Documentation',
+                btnCopy: '📋 Copy',
+                copiedText: 'Copied!',
+                filePathLabel: 'File path and name',
+                registryLabel: 'Registry path and value',
+                msiLabel: 'MSI Product Code',
+                psScriptsTitle: '📜 PowerShell Scripts',
+                installFilesTitle: '📦 Installation Files',
+                configFilesTitle: '⚙️ Configuration Files',
+                noInfoExtracted: 'ℹ️ No information could be extracted automatically - fill in manually',
+                docName: 'Name',
+                docType: 'Type',
+                docVersion: 'Version',
+                docDate: 'Date',
+                docOwner: 'Owner',
+                docInstallBehavior: 'Install Behavior',
+                docDescription: 'Description',
+                docInstallation: 'Installation',
+                docUninstallation: 'Uninstallation',
+                docDetection: 'Detection',
+                docDependencies: 'Dependencies',
+                docNotes: 'Notes',
+                installLog: 'Installation log',
+                uninstallLog: 'Uninstall log'
+            },
+            no: {
+                mainTitle: '📁 Intune Apps - Dokumentasjonsgenerator',
+                quoteText: '"Kode forteller hvordan. Dokumentasjon forteller hvorfor. Ditt fremtidige jeg vil takke deg, og kollegene dine vil gi deg kake." — Ukjent IT-legende',
+                selectFolderText: 'Velg mappe',
+                privacyTitle: '🔒 Personvern:',
+                privacyText: 'Alle filer behandles kun i nettleseren din. Ingenting lastes opp til servere. Alt skjer lokalt på din PC og slettes når du lukker siden.',
+                howToTitle: '📖 Slik bruker du appen:',
+                howToStep1: '1️⃣ Velg mappe med kildefiler (PS1, EXE, MSI, etc.)',
+                howToStep2: '2️⃣ Dobbeltsjekk automatisk utfylt informasjon (spesielt Type og Install Behavior)',
+                howToStep3: '3️⃣ Klikk "Vis dokumentasjon" for å se resultatet',
+                howToStep4: '4️⃣ Kopier dokumentasjonen og legg den sammen med pakken din',
+                selectedFolderLabel: '📂 Valgt mappe:',
+                statFiles: 'Filer',
+                statScripts: 'Scripts',
+                statInstallers: 'Installere',
+                statConfig: 'Config',
+                extractedInfoTitle: '📊 Automatisk hentet informasjon:',
+                packageInfoTitle: '⚙️ Pakkeinformasjon',
+                importantWarning: '⚠️ Viktig:',
+                importantText: 'Sjekk Type, Install Behavior, Beskrivelse og Eier',
+                labelPackageName: 'Pakkenavn *',
+                labelType: 'Type',
+                labelVersion: 'Versjon',
+                labelOwner: 'Eier',
+                labelDescription: 'Beskrivelse',
+                labelInstallBehavior: 'Install Behavior *',
+                labelInstallCommand: 'Installasjonskommando',
+                labelUninstallCommand: 'Avinstallasjonskommando',
+                labelDetectionMethod: 'Deteksjonsmetode',
+                labelDetectionScript: 'Deteksjonsskript',
+                labelDependencies: 'Avhengigheter',
+                labelNotes: 'Notater',
+                btnShowDoc: '📄 Vis dokumentasjon',
+                docTitle: '📄 Dokumentasjon',
+                btnCopy: '📋 Kopier',
+                copiedText: 'Kopiert!',
+                filePathLabel: 'Filsti og navn',
+                registryLabel: 'Registry-sti og verdi',
+                msiLabel: 'MSI Product Code',
+                psScriptsTitle: '📜 PowerShell Scripts',
+                installFilesTitle: '📦 Installasjonsfiler',
+                configFilesTitle: '⚙️ Konfigurasjonsfiler',
+                noInfoExtracted: 'ℹ️ Ingen informasjon kunne hentes automatisk - fyll ut manuelt',
+                docName: 'Navn',
+                docType: 'Type',
+                docVersion: 'Versjon',
+                docDate: 'Dato',
+                docOwner: 'Eier',
+                docInstallBehavior: 'Install Behavior',
+                docDescription: 'Beskrivelse',
+                docInstallation: 'Installasjon',
+                docUninstallation: 'Avinstallasjon',
+                docDetection: 'Deteksjon',
+                docDependencies: 'Avhengigheter',
+                docNotes: 'Notater',
+                installLog: 'Installasjonslogg',
+                uninstallLog: 'Avinstallasjonslogg'
+            }
+        };
+
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            const t = translations[lang];
+            
+            // Toggle flag visibility
+            if (lang === 'no') {
+                document.getElementById('langNO').style.display = 'none';
+                document.getElementById('langEN').style.display = 'block';
+            } else {
+                document.getElementById('langEN').style.display = 'none';
+                document.getElementById('langNO').style.display = 'block';
+            }
+            
+            // Update all text elements
+            Object.keys(t).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        element.placeholder = t[key];
+                    } else {
+                        element.textContent = t[key];
+                    }
+                }
+            });
+            
+            // Update detection method label dynamically if needed
+            updateDetectionLabel();
+            
+            // Save preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+
+        function updateDetectionLabel() {
+            const method = document.getElementById('detectMethod').value;
+            const t = translations[currentLanguage];
+            
+            if (method === 'File') {
+                document.getElementById('detectDetailsLabel').textContent = t.filePathLabel;
+            } else if (method === 'Registry') {
+                document.getElementById('detectDetailsLabel').textContent = t.registryLabel;
+            } else if (method === 'MSI') {
+                document.getElementById('detectDetailsLabel').textContent = t.msiLabel;
+            }
+        }
+
+        // Load saved language on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('preferredLanguage');
+            if (savedLang === 'no') {
+                switchLanguage('no');
+            }
+        });
+
         let data = {scripts: [], installers: [], configs: []};
         let logPaths = {install: '', uninstall: ''};
         let extractedInfo = {};
@@ -206,10 +412,11 @@
         });
 
         function displayFiles() {
+            const t = translations[currentLanguage];
             let html = '';
             
             if (data.scripts.length > 0) {
-                html += '<div class="file-section"><div class="file-section-title">📜 PowerShell Scripts (' + data.scripts.length + ')</div><div class="file-grid">';
+                html += '<div class="file-section"><div class="file-section-title">' + t.psScriptsTitle + ' (' + data.scripts.length + ')</div><div class="file-grid">';
                 data.scripts.forEach(f => {
                     html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
                 });
@@ -217,7 +424,7 @@
             }
             
             if (data.installers.length > 0) {
-                html += '<div class="file-section"><div class="file-section-title">📦 Installation Files (' + data.installers.length + ')</div><div class="file-grid">';
+                html += '<div class="file-section"><div class="file-section-title">' + t.installFilesTitle + ' (' + data.installers.length + ')</div><div class="file-grid">';
                 data.installers.forEach(f => {
                     html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
                 });
@@ -225,7 +432,7 @@
             }
             
             if (data.configs.length > 0) {
-                html += '<div class="file-section"><div class="file-section-title">⚙️ Configuration Files (' + data.configs.length + ')</div><div class="file-grid">';
+                html += '<div class="file-section"><div class="file-section-title">' + t.configFilesTitle + ' (' + data.configs.length + ')</div><div class="file-grid">';
                 data.configs.forEach(f => {
                     html += `<div class="file-card"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div>`;
                 });
@@ -236,18 +443,19 @@
         }
 
         function displayExtractedInfo() {
+            const t = translations[currentLanguage];
             let info = [];
             
-            if (extractedInfo.nameSource) info.push(`✅ Package name: "${extractedInfo.name}" from ${extractedInfo.nameSource}`);
-            if (extractedInfo.versionSource) info.push(`✅ Version: "${extractedInfo.version}" from ${extractedInfo.versionSource}`);
-            if (extractedInfo.typeSource) info.push(`✅ Type: "${extractedInfo.type}" (${extractedInfo.typeSource})`);
+            if (extractedInfo.nameSource) info.push(`✅ ${t.labelPackageName.replace(' *', '')}: "${extractedInfo.name}" from ${extractedInfo.nameSource}`);
+            if (extractedInfo.versionSource) info.push(`✅ ${t.labelVersion}: "${extractedInfo.version}" from ${extractedInfo.versionSource}`);
+            if (extractedInfo.typeSource) info.push(`✅ ${t.labelType}: "${extractedInfo.type}" (${extractedInfo.typeSource})`);
             if (extractedInfo.installCmd) info.push(`✅ Install command: generated from ${extractedInfo.installCmd}`);
             if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall command: generated from ${extractedInfo.uninstallCmd}`);
             if (extractedInfo.logInstall) info.push(`✅ Install log path: ${extractedInfo.logInstall}`);
             if (extractedInfo.logUninstall) info.push(`✅ Uninstall log path: ${extractedInfo.logUninstall}`);
             
             if (info.length === 0) {
-                info.push('ℹ️ No information could be extracted automatically - fill in manually');
+                info.push(t.noInfoExtracted);
             }
             
             document.getElementById('extractedInfo').innerHTML = info.join('<br>');
@@ -369,6 +577,7 @@
             const detailsContainer = document.getElementById('detectDetailsContainer');
             const scriptContainer = document.getElementById('detectScriptContainer');
             const label = document.getElementById('detectDetailsLabel');
+            const t = translations[currentLanguage];
             
             if (method === 'Custom Script') {
                 detailsContainer.style.display = 'none';
@@ -379,13 +588,13 @@
                 
                 // Update label based on method
                 if (method === 'File') {
-                    label.textContent = 'File path and name';
+                    label.textContent = t.filePathLabel;
                     document.getElementById('detectDetails').placeholder = 'E.g: C:\\Program Files\\Adobe\\Reader\\AcroRd32.exe';
                 } else if (method === 'Registry') {
-                    label.textContent = 'Registry path and value';
+                    label.textContent = t.registryLabel;
                     document.getElementById('detectDetails').placeholder = 'E.g: HKLM\\SOFTWARE\\Adobe\\Acrobat Reader\\Version';
                 } else if (method === 'MSI') {
-                    label.textContent = 'MSI Product Code';
+                    label.textContent = t.msiLabel;
                     document.getElementById('detectDetails').placeholder = 'E.g: {AC76BA86-7AD7-1033-7B44-AC0F074E4100}';
                 }
             }
@@ -402,6 +611,7 @@
         }
 
         function genDoc() {
+            const t = translations[currentLanguage];
             const d = new Date().toISOString().split('T')[0];
             const ib = document.getElementById('installBehavior').value || 'Not specified';
             const detectMethod = document.getElementById('detectMethod').value;
@@ -416,52 +626,54 @@
                 detectionText += '\nScript: ' + detectScript;
             }
             
-            return `Name:  
+            const generatedText = currentLanguage === 'en' ? 'Generated' : 'Generert';
+            
+            return `${t.docName}:  
 ${document.getElementById('name').value || '[Insert]'}
 
-Type:  
+${t.docType}:  
 ${document.getElementById('type').value}
 
-Version:  
+${t.docVersion}:  
 ${document.getElementById('version').value}
 
-Date:  
+${t.docDate}:  
 ${d}
 
-Owner:  
+${t.docOwner}:  
 ${document.getElementById('owner').value || '(Insert)'}
 
-Install Behavior:  
+${t.docInstallBehavior}:  
 ${ib}
 
 
-Description:  
+${t.docDescription}:  
 ${document.getElementById('description').value || '[Insert]'}
 
 
-Installation:  
+${t.docInstallation}:  
 ${document.getElementById('installCommand').value}
-${logPaths.install ? '\nInstallation log: ' + logPaths.install : ''}
+${logPaths.install ? '\n' + t.installLog + ': ' + logPaths.install : ''}
 
 
-Uninstallation:  
+${t.docUninstallation}:  
 ${document.getElementById('uninstallCommand').value}
-${logPaths.uninstall ? '\nUninstall log: ' + logPaths.uninstall : ''}
+${logPaths.uninstall ? '\n' + t.uninstallLog + ': ' + logPaths.uninstall : ''}
 
 
-Detection:  
+${t.docDetection}:  
 ${detectionText}
 
 
-Dependencies:  
+${t.docDependencies}:  
 ${document.getElementById('dependencies').value}
 
 
-Notes:  
+${t.docNotes}:  
 ${document.getElementById('notes').value}
 
 ---
-*Generated: ${new Date().toLocaleString('nb-NO')}*`;
+*${generatedText}: ${new Date().toLocaleString(currentLanguage === 'en' ? 'en-US' : 'nb-NO')}*`;
         }
 
         function copyDoc() {
