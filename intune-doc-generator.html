@@ -538,8 +538,8 @@
             const uninstall = data.scripts.find(s => s.name.toLowerCase().includes('uninstall'));
 
             if (deploy) {
-                document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"';
-                document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "Silent"';
+                document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "NonInteractive"';
+                document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "unInstall" -DeployMode "NonInteractive"';
                 extractedInfo.installCmd = 'PSADT standard command';
                 extractedInfo.uninstallCmd = 'PSADT standard command';
             } else if (install) {
