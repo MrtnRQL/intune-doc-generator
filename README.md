@@ -1,4 +1,4 @@
-# 📁 Intune Documentation Generator
+# 📁 Intune Apps Documentation Generator
 
 **Automatically create documentation for your Intune app packages in seconds!**
 
