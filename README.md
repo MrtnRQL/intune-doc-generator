@@ -9,7 +9,7 @@ No more manual documentation. Just select your package folder, and this tool doe
 ## 🚀 How to Use
 
 ### Step 1: Open the Tool
-Click here: [Open Documentation Generator]((https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html))
+Click here: [Open Documentation Generator](https://mrtnrql.github.io/intune-doc-generator/intune-documentation-generator.html)
 
 ### Step 2: Select Your Package Folder
 Click the **"Select Folder"** button and choose your Intune package folder (the one with your source files).
@@ -124,6 +124,8 @@ Notes:
 ### Q: Do I need to install anything?
 **A:** No! Just open the link in your browser. Works on Chrome, Edge, Firefox, and Safari.
 
+### Q: Can I use this offline?
+**A:** Yes! Download the HTML file and open it locally. Everything works offline.
 
 ### Q: What if the tool doesn't detect my package info?
 **A:** No problem! Just fill in the fields manually. The tool still saves you time with the template.
@@ -137,17 +139,15 @@ Notes:
 ---
 
 
----
 
 
----
 
 ## 🎉 Credits
 
-Built for Intune admins who are tired of creating documentation
+Built for Intune admins who are tired of writing the same documentation over and over.
 
 **"Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake."**
 
 ---
 
-**Made with ❤️ for the Intune community**
+**Made with ❤️ for the Intune community by Morten Glimme**
