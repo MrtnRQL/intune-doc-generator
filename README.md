@@ -8,8 +8,14 @@ No more manual documentation. Just select your package folder, and this tool doe
 
 ## 🚀 How to Use
 
-### Step 1: Open the Tool
-Click here: [Open Documentation Generator](https://mrtnrql.github.io/intune-doc-generator/intune-documentation-generator.html)
+###
+ Step 1: Open the Tool
+
+Click here: 
+[
+Open Documentation Generator
+](
+https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html
 
 ### Step 2: Select Your Package Folder
 Click the **"Select Folder"** button and choose your Intune package folder (the one with your source files).
