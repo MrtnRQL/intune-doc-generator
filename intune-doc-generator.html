@@ -136,7 +136,8 @@
                         <div><label class="form-label" id="labelPackageName">Package Name *</label><input type="text" id="name" class="form-input" placeholder="E.g: Adobe Reader DC"></div>
                         <div><label class="form-label" id="labelType">Type</label>
                             <select id="type" class="form-select">
-                                <option>Win32: PSADT</option>
+                                <option>Win32: PSADT v4</option>
+                                <option>Win32: PSADT v3</option>
                                 <option>Win32: MSI</option>
                                 <option>Win32: EXE</option>
                                 <option>Win32: MSIX</option>
@@ -478,28 +479,52 @@
 
         function fillForm() {
             extractedInfo = {};
-            const deploy = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
+            
+            // Check for PSADT v3 (Deploy-Application.ps1) or v4 (Invoke-AppDeployToolkit.ps1)
+            const deployV3 = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
+            const deployV4 = data.scripts.find(s => s.name.toLowerCase() === 'invoke-appdeploytoolkit.ps1');
+            const isPSADT = deployV3 || deployV4;
+            const isV4 = deployV4 ? true : false;
+            
             let name = '', ver = '1.0', type = '';
 
-            if (deploy) {
-                const vM = deploy.content.match(/\$appVendor\s*=\s*['"]([^'"]+)['"]/i);
-                const nM = deploy.content.match(/\$appName\s*=\s*['"]([^'"]+)['"]/i);
-                const vV = deploy.content.match(/\$appVersion\s*=\s*['"]([^'"]+)['"]/i);
+            if (isPSADT) {
+                const deployScript = deployV3 || deployV4;
+                
+                // v4 supports both $AppVendor (capitalized) and $appVendor (lowercase)
+                // Try both patterns
+                const vM = deployScript.content.match(/\$[Aa]ppVendor\s*=\s*['"]([^'"]+)['"]/i);
+                const nM = deployScript.content.match(/\$[Aa]ppName\s*=\s*['"]([^'"]+)['"]/i);
+                const vV = deployScript.content.match(/\$[Aa]ppVersion\s*=\s*['"]([^'"]+)['"]/i);
                 
                 if (vM && nM) {
                     name = `${vM[1]} ${nM[1]}`;
                     extractedInfo.name = name;
-                    extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor + $appName)';
+                    if (isV4) {
+                        extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppVendor + $AppName)';
+                    } else {
+                        extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor + $appName)';
+                    }
                 }
                 if (vV) {
                     ver = vV[1];
                     extractedInfo.version = ver;
-                    extractedInfo.versionSource = 'Deploy-Application.ps1 ($appVersion)';
+                    if (isV4) {
+                        extractedInfo.versionSource = 'Invoke-AppDeployToolkit.ps1 ($AppVersion)';
+                    } else {
+                        extractedInfo.versionSource = 'Deploy-Application.ps1 ($appVersion)';
+                    }
                 }
                 
-                type = 'Win32: PSADT';
-                extractedInfo.type = 'Win32: PSADT';
-                extractedInfo.typeSource = 'Deploy-Application.ps1 found';
+                if (isV4) {
+                    type = 'Win32: PSADT v4';
+                    extractedInfo.type = 'Win32: PSADT v4';
+                    extractedInfo.typeSource = 'Invoke-AppDeployToolkit.ps1 found (v4)';
+                } else {
+                    type = 'Win32: PSADT v3';
+                    extractedInfo.type = 'Win32: PSADT v3';
+                    extractedInfo.typeSource = 'Deploy-Application.ps1 found (v3)';
+                }
             } else {
                 // Detect based on file types present
                 if (data.installers.some(f => f.name.toLowerCase().endsWith('.msix'))) {
@@ -544,11 +569,20 @@
             const install = data.scripts.find(s => s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall'));
             const uninstall = data.scripts.find(s => s.name.toLowerCase().includes('uninstall'));
 
-            if (deploy) {
-                document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "NonInteractive"';
-                document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "unInstall" -DeployMode "NonInteractive"';
-                extractedInfo.installCmd = 'PSADT standard command';
-                extractedInfo.uninstallCmd = 'PSADT standard command';
+            if (isPSADT) {
+                if (isV4) {
+                    // PSADT v4 commands
+                    document.getElementById('installCommand').value = 'Invoke-AppDeployToolkit.exe -DeploymentType Install -DeployMode NonInteractive';
+                    document.getElementById('uninstallCommand').value = 'Invoke-AppDeployToolkit.exe -DeploymentType Uninstall -DeployMode NonInteractive';
+                    extractedInfo.installCmd = 'PSADT v4 standard command';
+                    extractedInfo.uninstallCmd = 'PSADT v4 standard command';
+                } else {
+                    // PSADT v3 commands
+                    document.getElementById('installCommand').value = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "NonInteractive"';
+                    document.getElementById('uninstallCommand').value = 'Deploy-Application.exe -DeploymentType "unInstall" -DeployMode "NonInteractive"';
+                    extractedInfo.installCmd = 'PSADT v3 standard command';
+                    extractedInfo.uninstallCmd = 'PSADT v3 standard command';
+                }
             } else if (install) {
                 document.getElementById('installCommand').value = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\${install.name}`;
                 extractedInfo.installCmd = install.name;
