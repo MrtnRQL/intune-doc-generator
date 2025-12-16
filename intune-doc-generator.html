@@ -148,7 +148,13 @@
                         </div>
                         <div><label class="form-label" id="labelVersion">Version</label><input type="text" id="version" class="form-input" placeholder="E.g: 24.1.0"></div>
                         <div><label class="form-label" id="labelOwner">Owner</label><input type="text" id="owner" class="form-input" placeholder="E.g: IT Department"></div>
-                        <div class="col-span-2"><label class="form-label" id="labelDescription">Description</label><textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea></div>
+                        <div class="col-span-2">
+                            <label class="form-label" id="labelDescription">Description</label>
+                            <textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea>
+                            <button type="button" class="btn" id="btnAiDescription" onclick="fetchAiDescription()" style="margin-top: 0.5rem; background: #8b5cf6; color: white; font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                🤖 Let AI Help - Auto-magic description
+                            </button>
+                        </div>
                         <div class="col-span-2">
                             <label class="form-label" id="labelInstallBehavior">Install Behavior *</label>
                             <select id="installBehavior" class="form-select">
@@ -612,6 +618,159 @@
                     }
                 }
             });
+        }
+
+        async function fetchAiDescription() {
+            const appName = document.getElementById('name').value.trim();
+            if (!appName) {
+                alert('Please enter a package name first!');
+                return;
+            }
+
+            const btn = document.getElementById('btnAiDescription');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '🔍 Searching Wikipedia...';
+
+            try {
+                // Try Wikipedia first
+                let description = await tryWikipedia(appName);
+                
+                // If Wikipedia fails, try DuckDuckGo
+                if (!description) {
+                    btn.innerHTML = '🔍 Trying DuckDuckGo...';
+                    description = await tryDuckDuckGo(appName);
+                }
+
+                if (description) {
+                    document.getElementById('description').value = description;
+                    btn.innerHTML = '✅ Description added!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    btn.innerHTML = '❌ No results found';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                    alert('No description found. Try:\n- Editing the app name to be more specific\n- Removing version numbers\n- Using the official product name');
+                }
+            } catch (error) {
+                console.error('Error fetching description:', error);
+                btn.innerHTML = '❌ Error occurred';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+                alert('Could not fetch description. Please check your internet connection and try again.');
+            }
+        }
+
+        async function tryWikipedia(appName) {
+            try {
+                // Clean app name - remove version numbers and common suffixes
+                const cleanName = appName.replace(/\d+(\.\d+)*/g, '').replace(/\s+(DC|CC|Pro|Enterprise|Standard)\s*$/i, '').trim();
+                
+                // Try exact match first
+                let url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName)}`;
+                let response = await fetch(url);
+                let data = await response.json();
+
+                if (data.type === 'standard' && data.extract) {
+                    // Get first 2-3 sentences, up to 200 characters
+                    let extract = data.extract;
+                    const sentences = extract.match(/[^.!?]+[.!?]+/g) || [];
+                    let description = sentences.slice(0, 2).join(' ').trim();
+                    
+                    // If too short, add third sentence
+                    if (description.length < 100 && sentences[2]) {
+                        description += ' ' + sentences[2].trim();
+                    }
+                    
+                    // Limit to ~200 chars
+                    if (description.length > 200) {
+                        description = description.substring(0, 197) + '...';
+                    }
+                    
+                    return description;
+                }
+
+                // Try with "software" appended
+                url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanName + ' software')}`;
+                response = await fetch(url);
+                data = await response.json();
+
+                if (data.type === 'standard' && data.extract) {
+                    let extract = data.extract;
+                    const sentences = extract.match(/[^.!?]+[.!?]+/g) || [];
+                    let description = sentences.slice(0, 2).join(' ').trim();
+                    
+                    if (description.length < 100 && sentences[2]) {
+                        description += ' ' + sentences[2].trim();
+                    }
+                    
+                    if (description.length > 200) {
+                        description = description.substring(0, 197) + '...';
+                    }
+                    
+                    return description;
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Wikipedia error:', error);
+                return null;
+            }
+        }
+
+        async function tryDuckDuckGo(appName) {
+            try {
+                // Clean app name
+                const cleanName = appName.replace(/\d+(\.\d+)*/g, '').trim();
+                
+                const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(cleanName)}&format=json&no_html=1`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.Abstract && data.Abstract.length > 20) {
+                    let description = data.Abstract;
+                    
+                    // Limit to ~200 chars
+                    if (description.length > 200) {
+                        const sentences = description.match(/[^.!?]+[.!?]+/g) || [];
+                        description = sentences.slice(0, 2).join(' ').trim();
+                        if (description.length > 200) {
+                            description = description.substring(0, 197) + '...';
+                        }
+                    }
+                    
+                    return description;
+                }
+
+                // Try RelatedTopics as fallback
+                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                    for (let topic of data.RelatedTopics) {
+                        if (topic.Text && topic.Text.length > 20) {
+                            let description = topic.Text;
+                            if (description.length > 200) {
+                                const sentences = description.match(/[^.!?]+[.!?]+/g) || [];
+                                description = sentences.slice(0, 2).join(' ').trim();
+                                if (description.length > 200) {
+                                    description = description.substring(0, 197) + '...';
+                                }
+                            }
+                            return description;
+                        }
+                    }
+                }
+
+                return null;
+            } catch (error) {
+                console.error('DuckDuckGo error:', error);
+                return null;
+            }
         }
 
         function toggleDetectDetails() {
