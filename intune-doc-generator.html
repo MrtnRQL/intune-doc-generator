@@ -404,9 +404,17 @@
                 const ext = file.name.split('.').pop().toLowerCase();
                 const fileInfo = {name: file.name, size: file.size, path: file.webkitRelativePath || file.name};
                 
-                if (ext === 'ps1') {
+                if (ext === 'ps1' || ext === 'psd1') {
                     const content = await file.text();
-                    data.scripts.push({...fileInfo, content, logs: findLogs(content)});
+                    fileInfo.content = content;
+                    fileInfo.logs = findLogs(content);
+                    
+                    if (ext === 'ps1') {
+                        data.scripts.push(fileInfo);
+                    } else {
+                        // PSD1 files (config files)
+                        data.configs.push(fileInfo);
+                    }
                 } else if (['exe','msi','msix','intunewin'].includes(ext)) {
                     data.installers.push(fileInfo);
                 } else if (['json','xml','txt'].includes(ext)) {
@@ -466,6 +474,8 @@
             if (extractedInfo.typeSource) info.push(`✅ ${t.labelType}: "${extractedInfo.type}" (${extractedInfo.typeSource})`);
             if (extractedInfo.installCmd) info.push(`✅ Install command: generated from ${extractedInfo.installCmd}`);
             if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall command: generated from ${extractedInfo.uninstallCmd}`);
+            if (extractedInfo.configLogPath) info.push(extractedInfo.configLogPath);
+            if (extractedInfo.configLogPathNoAdmin) info.push(extractedInfo.configLogPathNoAdmin);
             if (extractedInfo.logInstall) info.push(`✅ Install log path: ${extractedInfo.logInstall}`);
             if (extractedInfo.logUninstall) info.push(`✅ Uninstall log path: ${extractedInfo.logUninstall}`);
             
@@ -605,10 +615,57 @@
         }
 
         function extractLogPaths() {
+            // First, try to get log paths from config.psd1 (PSADT v4)
+            const configFile = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
+            
+            if (configFile) {
+                // Extract Toolkit.LogPath from config.psd1
+                const logPathMatch = configFile.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
+                const logPathNoAdminMatch = configFile.content.match(/LogPathNoAdminRights\s*=\s*['"]([^'"]+)['"]/i);
+                
+                if (logPathMatch) {
+                    const logPath = logPathMatch[1]
+                        .replace(/\$envWinDir/gi, 'C:\\Windows')
+                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
+                    
+                    extractedInfo.configLogPath = `✅ Log path from config.psd1: ${logPath}`;
+                    
+                    // Use this as base path for logs if not found in scripts
+                    if (!logPaths.install) {
+                        logPaths.install = `${logPath}\\Install.log`;
+                    }
+                    if (!logPaths.uninstall) {
+                        logPaths.uninstall = `${logPath}\\Uninstall.log`;
+                    }
+                }
+                
+                if (logPathNoAdminMatch) {
+                    const logPathNoAdmin = logPathNoAdminMatch[1]
+                        .replace(/\$envWinDir/gi, 'C:\\Windows')
+                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
+                    
+                    extractedInfo.configLogPathNoAdmin = `✅ Log path (no admin) from config.psd1: ${logPathNoAdmin}`;
+                }
+            }
+            
+            // Then check PowerShell scripts for specific log file names
             data.scripts.forEach(s => {
-                if (s.logs.length > 0) {
+                if (s.logs && s.logs.length > 0) {
                     let log = s.logs[0];
-                    if (!log.includes('\\')) log = 'C:\\ProgramData\\IntuneLogs\\' + log;
+                    
+                    // If log doesn't have full path, add default
+                    if (!log.includes('\\')) {
+                        // Use config path if available, otherwise default
+                        const basePath = configFile ? 
+                            (configFile.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i)?.[1]
+                                .replace(/\$envWinDir/gi, 'C:\\Windows')
+                                .replace(/\$envProgramData/gi, 'C:\\ProgramData') || 'C:\\ProgramData\\IntuneLogs') 
+                            : 'C:\\ProgramData\\IntuneLogs';
+                        log = `${basePath}\\${log}`;
+                    }
+                    
                     if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
                         logPaths.install = log;
                         extractedInfo.logInstall = `${log} (from ${s.name})`;
@@ -829,6 +886,23 @@
             
             const generatedText = currentLanguage === 'en' ? 'Generated' : 'Generert';
             
+            // Build log path section
+            let logPathSection = '';
+            if (logPaths.install || logPaths.uninstall) {
+                const logPathLabel = currentLanguage === 'en' ? 'Log Path' : 'Loggsti';
+                const installLogLabel = currentLanguage === 'en' ? 'Installation' : 'Installasjon';
+                const uninstallLogLabel = currentLanguage === 'en' ? 'Uninstallation' : 'Avinstallasjon';
+                
+                logPathSection = `\n\n${logPathLabel}:  \n`;
+                if (logPaths.install) {
+                    logPathSection += `${installLogLabel}: ${logPaths.install}`;
+                }
+                if (logPaths.uninstall) {
+                    if (logPaths.install) logPathSection += '\n';
+                    logPathSection += `${uninstallLogLabel}: ${logPaths.uninstall}`;
+                }
+            }
+            
             return `${t.docName}:  
 ${document.getElementById('name').value || '[Insert]'}
 
@@ -854,16 +928,14 @@ ${document.getElementById('description').value || '[Insert]'}
 
 ${t.docInstallation}:  
 ${document.getElementById('installCommand').value}
-${logPaths.install ? '\n' + t.installLog + ': ' + logPaths.install : ''}
 
 
 ${t.docUninstallation}:  
 ${document.getElementById('uninstallCommand').value}
-${logPaths.uninstall ? '\n' + t.uninstallLog + ': ' + logPaths.uninstall : ''}
 
 
 ${t.docDetection}:  
-${detectionText}
+${detectionText}${logPathSection}
 
 
 ${t.docDependencies}:  
