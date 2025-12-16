@@ -152,7 +152,7 @@
                             <label class="form-label" id="labelDescription">Description</label>
                             <textarea id="description" class="form-textarea" rows="3" placeholder="Describe what the application does and who it's for"></textarea>
                             <button type="button" class="btn" id="btnAiDescription" onclick="fetchAiDescription()" style="margin-top: 0.5rem; background: #8b5cf6; color: white; font-size: 0.875rem; padding: 0.5rem 1rem;">
-                                🤖 Let AI Help - Auto-magic description
+                                🤖 Let AI Help - Auto-magic description (Beta)
                             </button>
                         </div>
                         <div class="col-span-2">
@@ -181,6 +181,14 @@
                         <div class="col-span-2" id="detectDetailsContainer" style="display: none;">
                             <label class="form-label" id="detectDetailsLabel">Detection Details</label>
                             <textarea id="detectDetails" class="form-textarea" rows="2" placeholder="Enter detection details"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label" id="labelLogPathInstall">Log Path - Installation</label>
+                            <input type="text" id="logPathInstall" class="form-input" placeholder="E.g: C:\Windows\Logs\Software\Install-App.log">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="form-label" id="labelLogPathUninstall">Log Path - Uninstallation</label>
+                            <input type="text" id="logPathUninstall" class="form-input" placeholder="E.g: C:\Windows\Logs\Software\Uninstall-App.log">
                         </div>
                         <div class="col-span-2"><label class="form-label" id="labelDependencies">Dependencies</label><textarea id="dependencies" class="form-textarea" rows="2" placeholder="E.g: .NET Framework 4.8 or higher"></textarea></div>
                         <div class="col-span-2"><label class="form-label" id="labelNotes">Notes</label><textarea id="notes" class="form-textarea" rows="2" placeholder="E.g: No reboot required"></textarea></div>
@@ -247,6 +255,8 @@
                 labelDetectionScript: 'Detection Script',
                 labelDependencies: 'Dependencies',
                 labelNotes: 'Notes',
+                labelLogPathInstall: 'Log Path - Installation',
+                labelLogPathUninstall: 'Log Path - Uninstallation',
                 btnShowDoc: '📄 Show Documentation',
                 docTitle: '📄 Documentation',
                 btnCopy: '📋 Copy',
@@ -305,6 +315,8 @@
                 labelDetectionScript: 'Deteksjonsskript',
                 labelDependencies: 'Avhengigheter',
                 labelNotes: 'Notater',
+                labelLogPathInstall: 'Loggsti - Installasjon',
+                labelLogPathUninstall: 'Loggsti - Avinstallasjon',
                 btnShowDoc: '📄 Vis dokumentasjon',
                 docTitle: '📄 Dokumentasjon',
                 btnCopy: '📋 Kopier',
@@ -612,6 +624,10 @@
             document.getElementById('notes').value = '- No reboot required';
 
             extractLogPaths();
+            
+            // Populate log path fields from extracted info
+            document.getElementById('logPathInstall').value = logPaths.install || '';
+            document.getElementById('logPathUninstall').value = logPaths.uninstall || '';
         }
 
         function extractLogPaths() {
@@ -886,20 +902,24 @@
             
             const generatedText = currentLanguage === 'en' ? 'Generated' : 'Generert';
             
+            // Get log paths from input fields
+            const logPathInstall = document.getElementById('logPathInstall').value.trim();
+            const logPathUninstall = document.getElementById('logPathUninstall').value.trim();
+            
             // Build log path section
             let logPathSection = '';
-            if (logPaths.install || logPaths.uninstall) {
+            if (logPathInstall || logPathUninstall) {
                 const logPathLabel = currentLanguage === 'en' ? 'Log Path' : 'Loggsti';
                 const installLogLabel = currentLanguage === 'en' ? 'Installation' : 'Installasjon';
                 const uninstallLogLabel = currentLanguage === 'en' ? 'Uninstallation' : 'Avinstallasjon';
                 
                 logPathSection = `\n\n${logPathLabel}:  \n`;
-                if (logPaths.install) {
-                    logPathSection += `${installLogLabel}: ${logPaths.install}`;
+                if (logPathInstall) {
+                    logPathSection += `${installLogLabel}: ${logPathInstall}`;
                 }
-                if (logPaths.uninstall) {
-                    if (logPaths.install) logPathSection += '\n';
-                    logPathSection += `${uninstallLogLabel}: ${logPaths.uninstall}`;
+                if (logPathUninstall) {
+                    if (logPathInstall) logPathSection += '\n';
+                    logPathSection += `${uninstallLogLabel}: ${logPathUninstall}`;
                 }
             }
             
