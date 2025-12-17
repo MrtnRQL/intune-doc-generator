@@ -543,19 +543,58 @@
                 
                 // v4 supports both $AppVendor (capitalized) and $appVendor (lowercase)
                 // Try both patterns
-                const vM = deployScript.content.match(/\$[Aa]ppVendor\s*=\s*['"]([^'"]+)['"]/i);
+                const vM = deployScript.content.match(/\$[Aa]ppVendor\s*=\s*['"]([^'"]*)['"]/i);
                 const nM = deployScript.content.match(/\$[Aa]ppName\s*=\s*['"]([^'"]+)['"]/i);
                 const vV = deployScript.content.match(/\$[Aa]ppVersion\s*=\s*['"]([^'"]+)['"]/i);
                 
+                // Handle different scenarios:
+                // 1. Both vendor and name set → "Vendor Name"
+                // 2. Only name set (vendor empty) → "Name"
+                // 3. Only vendor set (name empty) → "Vendor"
+                
                 if (vM && nM) {
-                    name = `${vM[1]} ${nM[1]}`;
+                    const vendor = vM[1].trim();
+                    const appNameValue = nM[1].trim();
+                    
+                    if (vendor && appNameValue) {
+                        // Both set: "Adobe Reader"
+                        name = `${vendor} ${appNameValue}`;
+                        extractedInfo.name = name;
+                        if (isV4) {
+                            extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppVendor + $AppName)';
+                        } else {
+                            extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor + $appName)';
+                        }
+                    } else if (appNameValue) {
+                        // Only appName set: "Logitech Unifying Software"
+                        name = appNameValue;
+                        extractedInfo.name = name;
+                        if (isV4) {
+                            extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppName)';
+                        } else {
+                            extractedInfo.nameSource = 'Deploy-Application.ps1 ($appName)';
+                        }
+                    } else if (vendor) {
+                        // Only vendor set (rare)
+                        name = vendor;
+                        extractedInfo.name = name;
+                        if (isV4) {
+                            extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppVendor)';
+                        } else {
+                            extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor)';
+                        }
+                    }
+                } else if (nM) {
+                    // Only appName found (no vendor variable at all)
+                    name = nM[1].trim();
                     extractedInfo.name = name;
                     if (isV4) {
-                        extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppVendor + $AppName)';
+                        extractedInfo.nameSource = 'Invoke-AppDeployToolkit.ps1 ($AppName)';
                     } else {
-                        extractedInfo.nameSource = 'Deploy-Application.ps1 ($appVendor + $appName)';
+                        extractedInfo.nameSource = 'Deploy-Application.ps1 ($appName)';
                     }
                 }
+                
                 if (vV) {
                     ver = vV[1];
                     extractedInfo.version = ver;
