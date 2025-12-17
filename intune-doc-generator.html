@@ -430,6 +430,11 @@
                 } else if (['exe','msi','msix','intunewin'].includes(ext)) {
                     data.installers.push(fileInfo);
                 } else if (['json','xml','txt'].includes(ext)) {
+                    // Read XML and JSON files to extract config
+                    if (ext === 'xml' || ext === 'json') {
+                        const content = await file.text();
+                        fileInfo.content = content;
+                    }
                     data.configs.push(fileInfo);
                 }
             }
@@ -488,6 +493,7 @@
             if (extractedInfo.uninstallCmd) info.push(`✅ Uninstall command: generated from ${extractedInfo.uninstallCmd}`);
             if (extractedInfo.configLogPath) info.push(extractedInfo.configLogPath);
             if (extractedInfo.configLogPathNoAdmin) info.push(extractedInfo.configLogPathNoAdmin);
+            if (extractedInfo.configMsiLogPath) info.push(extractedInfo.configMsiLogPath);
             if (extractedInfo.logInstall) info.push(`✅ Install log path: ${extractedInfo.logInstall}`);
             if (extractedInfo.logUninstall) info.push(`✅ Uninstall log path: ${extractedInfo.logUninstall}`);
             
@@ -500,8 +506,24 @@
 
         function findLogs(c) {
             const logs = [];
-            const p = /["']([^"']*\.log)["']/gi;
-            let m; while ((m = p.exec(c))) logs.push(m[1]);
+            
+            // Pattern 1: Fang loggfiler MED quotes (høyest prioritet)
+            const quotedPattern = /["']([^"']*\.log)["']/gi;
+            let m;
+            while ((m = quotedPattern.exec(c))) {
+                logs.push(m[1]);
+            }
+            
+            // Pattern 2: Fang loggfiler UTEN quotes (f.eks: Start-Transcript C:\Path\File.log)
+            // Må være forsiktig her for å unngå false positives
+            const unquotedPattern = /(?:^|\s)([A-Z]:\\[^\s"']+\.log)|(?:^|\s)([\w\-]+\.log)(?=\s|$)/gim;
+            while ((m = unquotedPattern.exec(c))) {
+                const logPath = m[1] || m[2];
+                if (logPath && !logs.includes(logPath)) {
+                    logs.push(logPath);
+                }
+            }
+            
             return logs;
         }
 
@@ -631,13 +653,18 @@
         }
 
         function extractLogPaths() {
-            // First, try to get log paths from config.psd1 (PSADT v4)
-            const configFile = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
+            // Check for PSADT v4 config.psd1
+            const configPSD1 = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
             
-            if (configFile) {
-                // Extract Toolkit.LogPath from config.psd1
-                const logPathMatch = configFile.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
-                const logPathNoAdminMatch = configFile.content.match(/LogPathNoAdminRights\s*=\s*['"]([^'"]+)['"]/i);
+            // Check for PSADT v3 AppDeployToolkitConfig.xml
+            const configXML = data.configs.find(c => 
+                c.name.toLowerCase() === 'appdeploytoolkitconfig.xml' && c.content
+            );
+            
+            // Extract from PSADT v4 config.psd1
+            if (configPSD1) {
+                const logPathMatch = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
+                const logPathNoAdminMatch = configPSD1.content.match(/LogPathNoAdminRights\s*=\s*['"]([^'"]+)['"]/i);
                 
                 if (logPathMatch) {
                     const logPath = logPathMatch[1]
@@ -647,7 +674,6 @@
                     
                     extractedInfo.configLogPath = `✅ Log path from config.psd1: ${logPath}`;
                     
-                    // Use this as base path for logs if not found in scripts
                     if (!logPaths.install) {
                         logPaths.install = `${logPath}\\Install.log`;
                     }
@@ -666,6 +692,48 @@
                 }
             }
             
+            // Extract from PSADT v3 AppDeployToolkitConfig.xml
+            if (configXML) {
+                // Extract Toolkit_LogPath from XML
+                const logPathMatch = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
+                
+                if (logPathMatch) {
+                    let logPath = logPathMatch[1].trim();
+                    
+                    // Expand environment variables
+                    logPath = logPath
+                        .replace(/\$envWinDir/gi, 'C:\\Windows')
+                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                        .replace(/\$envSystemDrive/gi, 'C:')
+                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp')
+                        .replace(/%WINDIR%/gi, 'C:\\Windows')
+                        .replace(/%PROGRAMDATA%/gi, 'C:\\ProgramData')
+                        .replace(/%TEMP%/gi, 'C:\\Windows\\Temp');
+                    
+                    extractedInfo.configLogPath = `✅ Log path from AppDeployToolkitConfig.xml: ${logPath}`;
+                    
+                    // Use as base path if not already set
+                    if (!logPaths.install) {
+                        logPaths.install = `${logPath}\\Install.log`;
+                    }
+                    if (!logPaths.uninstall) {
+                        logPaths.uninstall = `${logPath}\\Uninstall.log`;
+                    }
+                }
+                
+                // Also check for MSI_LogPath (separate MSI logging path)
+                const msiLogPathMatch = configXML.content.match(/<MSI_LogPath>([^<]+)<\/MSI_LogPath>/i);
+                if (msiLogPathMatch) {
+                    let msiLogPath = msiLogPathMatch[1].trim();
+                    msiLogPath = msiLogPath
+                        .replace(/\$envWinDir/gi, 'C:\\Windows')
+                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
+                    
+                    extractedInfo.configMsiLogPath = `✅ MSI log path from AppDeployToolkitConfig.xml: ${msiLogPath}`;
+                }
+            }
+            
             // Then check PowerShell scripts for specific log file names
             data.scripts.forEach(s => {
                 if (s.logs && s.logs.length > 0) {
@@ -674,11 +742,24 @@
                     // If log doesn't have full path, add default
                     if (!log.includes('\\')) {
                         // Use config path if available, otherwise default
-                        const basePath = configFile ? 
-                            (configFile.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i)?.[1]
-                                .replace(/\$envWinDir/gi, 'C:\\Windows')
-                                .replace(/\$envProgramData/gi, 'C:\\ProgramData') || 'C:\\ProgramData\\IntuneLogs') 
-                            : 'C:\\ProgramData\\IntuneLogs';
+                        let basePath = 'C:\\ProgramData\\IntuneLogs';
+                        
+                        if (configPSD1) {
+                            const configPath = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
+                            if (configPath) {
+                                basePath = configPath[1]
+                                    .replace(/\$envWinDir/gi, 'C:\\Windows')
+                                    .replace(/\$envProgramData/gi, 'C:\\ProgramData');
+                            }
+                        } else if (configXML) {
+                            const xmlPath = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
+                            if (xmlPath) {
+                                basePath = xmlPath[1].trim()
+                                    .replace(/\$envWinDir/gi, 'C:\\Windows')
+                                    .replace(/\$envProgramData/gi, 'C:\\ProgramData');
+                            }
+                        }
+                        
                         log = `${basePath}\\${log}`;
                     }
                     
@@ -703,21 +784,46 @@
             const btn = document.getElementById('btnAiDescription');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '🔍 Searching Wikipedia...';
 
             try {
-                // Try Wikipedia first
-                let description = await tryWikipedia(appName);
-                
-                // If Wikipedia fails, try DuckDuckGo
-                if (!description) {
-                    btn.innerHTML = '🔍 Trying DuckDuckGo...';
-                    description = await tryDuckDuckGo(appName);
+                // Generate multiple variants of the app name to try
+                const variants = generateAppNameVariants(appName);
+                let description = null;
+                let successfulVariant = null;
+                let source = null;
+
+                // Try each variant until we get a result
+                for (let i = 0; i < variants.length; i++) {
+                    const variant = variants[i];
+                    btn.innerHTML = `🔍 Searching Wikipedia... (${i + 1}/${variants.length})`;
+                    
+                    // Try Wikipedia first
+                    description = await tryWikipedia(variant);
+                    if (description) {
+                        successfulVariant = variant;
+                        source = 'Wikipedia';
+                        break;
+                    }
+                    
+                    // If Wikipedia fails, try DuckDuckGo
+                    btn.innerHTML = `🔍 Trying DuckDuckGo... (${i + 1}/${variants.length})`;
+                    description = await tryDuckDuckGo(variant);
+                    if (description) {
+                        successfulVariant = variant;
+                        source = 'DuckDuckGo';
+                        break;
+                    }
                 }
 
                 if (description) {
                     document.getElementById('description').value = description;
-                    btn.innerHTML = '✅ Description added!';
+                    btn.innerHTML = `✅ Found via ${source}!`;
+                    
+                    // Show which variant worked if different from original
+                    if (successfulVariant !== appName) {
+                        console.log(`Success with variant: "${successfulVariant}" (original: "${appName}")`);
+                    }
+                    
                     setTimeout(() => {
                         btn.innerHTML = originalText;
                         btn.disabled = false;
@@ -728,7 +834,7 @@
                         btn.innerHTML = originalText;
                         btn.disabled = false;
                     }, 2000);
-                    alert('No description found. Try:\n- Editing the app name to be more specific\n- Removing version numbers\n- Using the official product name');
+                    alert(`No description found after trying ${variants.length} variants.\n\nTried:\n- ${variants.join('\n- ')}\n\nTips:\n- Use the official product name\n- Remove company/vendor name\n- Try a more generic term`);
                 }
             } catch (error) {
                 console.error('Error fetching description:', error);
@@ -739,6 +845,65 @@
                 }, 2000);
                 alert('Could not fetch description. Please check your internet connection and try again.');
             }
+        }
+
+        function generateAppNameVariants(appName) {
+            const variants = [];
+            
+            // Variant 1: Original name
+            variants.push(appName);
+            
+            // Variant 2: Remove version numbers only
+            const noVersion = appName.replace(/\d+(\.\d+)*/g, '').trim();
+            if (noVersion !== appName && noVersion.length > 0) {
+                variants.push(noVersion);
+            }
+            
+            // Variant 3: Remove version + common suffixes
+            const noSuffix = noVersion
+                .replace(/\s+(DC|CC|Pro|Professional|Enterprise|Standard|Premium|Ultimate|Express|Community|Free|Lite)\s*$/i, '')
+                .trim();
+            if (noSuffix !== noVersion && noSuffix.length > 0) {
+                variants.push(noSuffix);
+            }
+            
+            // Variant 4: Remove architecture indicators
+            const noArch = noSuffix
+                .replace(/\s+(x86|x64|32-bit|64-bit|32bit|64bit)\s*/gi, '')
+                .trim();
+            if (noArch !== noSuffix && noArch.length > 0) {
+                variants.push(noArch);
+            }
+            
+            // Variant 5: Remove package type
+            const noPackageType = noArch
+                .replace(/\s+(MSI|EXE|Installer|Setup)\s*$/i, '')
+                .trim();
+            if (noPackageType !== noArch && noPackageType.length > 0) {
+                variants.push(noPackageType);
+            }
+            
+            // Variant 6: Try removing first word (often vendor name)
+            // E.g., "Adobe Reader" -> "Reader"
+            const words = noPackageType.split(/\s+/);
+            if (words.length > 1) {
+                const withoutFirst = words.slice(1).join(' ');
+                if (withoutFirst.length > 3) {  // Avoid too short names
+                    variants.push(withoutFirst);
+                }
+            }
+            
+            // Variant 7: Try removing last word
+            // E.g., "Acrobat Reader DC" -> "Acrobat Reader"
+            if (words.length > 1) {
+                const withoutLast = words.slice(0, -1).join(' ');
+                if (withoutLast.length > 3 && !variants.includes(withoutLast)) {
+                    variants.push(withoutLast);
+                }
+            }
+            
+            // Remove duplicates while preserving order
+            return [...new Set(variants)];
         }
 
         async function tryWikipedia(appName) {
