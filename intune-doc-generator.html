@@ -692,126 +692,188 @@
         }
 
         function extractLogPaths() {
-            // Check for PSADT v4 config.psd1
-            const configPSD1 = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
+    // Check for PSADT v4 config.psd1
+    const configPSD1 = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
+    
+    // Check for PSADT v3 AppDeployToolkitConfig.xml
+    const configXML = data.configs.find(c => 
+        c.name.toLowerCase() === 'appdeploytoolkitconfig.xml' && c.content
+    );
+    
+    // Check if PSADT is detected
+    const deployV3 = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
+    const deployV4 = data.scripts.find(s => s.name.toLowerCase() === 'invoke-appdeploytoolkit.ps1');
+    const isPSADT = deployV3 || deployV4;
+    const isV4 = deployV4 ? true : false;
+    
+    let basePath = 'C:\\Windows\\Logs\\Software';
+    let logToHierarchy = false;
+    let installName = '';
+    let appVendor = '';
+    let appName = '';
+    let appVersion = '';
+    let appLang = '';
+    let appRevision = '';
+    
+    // Extract from PSADT v4 config.psd1
+    if (configPSD1) {
+        const logPathMatch = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
+        const logPathNoAdminMatch = configPSD1.content.match(/LogPathNoAdminRights\s*=\s*['"]([^'"]+)['"]/i);
+        const hierarchyMatch = configPSD1.content.match(/LogToHierarchy\s*=\s*\$(\w+)/i);
+        
+        if (logPathMatch) {
+            basePath = logPathMatch[1]
+                .replace(/\$envWinDir/gi, 'C:\\Windows')
+                .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
             
-            // Check for PSADT v3 AppDeployToolkitConfig.xml
-            const configXML = data.configs.find(c => 
-                c.name.toLowerCase() === 'appdeploytoolkitconfig.xml' && c.content
-            );
-            
-            // Extract from PSADT v4 config.psd1
-            if (configPSD1) {
-                const logPathMatch = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
-                const logPathNoAdminMatch = configPSD1.content.match(/LogPathNoAdminRights\s*=\s*['"]([^'"]+)['"]/i);
-                
-                if (logPathMatch) {
-                    const logPath = logPathMatch[1]
-                        .replace(/\$envWinDir/gi, 'C:\\Windows')
-                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
-                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
-                    
-                    extractedInfo.configLogPath = `✅ Log path from config.psd1: ${logPath}`;
-                    
-                    if (!logPaths.install) {
-                        logPaths.install = `${logPath}\\Install.log`;
-                    }
-                    if (!logPaths.uninstall) {
-                        logPaths.uninstall = `${logPath}\\Uninstall.log`;
-                    }
-                }
-                
-                if (logPathNoAdminMatch) {
-                    const logPathNoAdmin = logPathNoAdminMatch[1]
-                        .replace(/\$envWinDir/gi, 'C:\\Windows')
-                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
-                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
-                    
-                    extractedInfo.configLogPathNoAdmin = `✅ Log path (no admin) from config.psd1: ${logPathNoAdmin}`;
-                }
-            }
-            
-            // Extract from PSADT v3 AppDeployToolkitConfig.xml
-            if (configXML) {
-                // Extract Toolkit_LogPath from XML
-                const logPathMatch = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
-                
-                if (logPathMatch) {
-                    let logPath = logPathMatch[1].trim();
-                    
-                    // Expand environment variables
-                    logPath = logPath
-                        .replace(/\$envWinDir/gi, 'C:\\Windows')
-                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
-                        .replace(/\$envSystemDrive/gi, 'C:')
-                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp')
-                        .replace(/%WINDIR%/gi, 'C:\\Windows')
-                        .replace(/%PROGRAMDATA%/gi, 'C:\\ProgramData')
-                        .replace(/%TEMP%/gi, 'C:\\Windows\\Temp');
-                    
-                    extractedInfo.configLogPath = `✅ Log path from AppDeployToolkitConfig.xml: ${logPath}`;
-                    
-                    // Use as base path if not already set
-                    if (!logPaths.install) {
-                        logPaths.install = `${logPath}\\Install.log`;
-                    }
-                    if (!logPaths.uninstall) {
-                        logPaths.uninstall = `${logPath}\\Uninstall.log`;
-                    }
-                }
-                
-                // Also check for MSI_LogPath (separate MSI logging path)
-                const msiLogPathMatch = configXML.content.match(/<MSI_LogPath>([^<]+)<\/MSI_LogPath>/i);
-                if (msiLogPathMatch) {
-                    let msiLogPath = msiLogPathMatch[1].trim();
-                    msiLogPath = msiLogPath
-                        .replace(/\$envWinDir/gi, 'C:\\Windows')
-                        .replace(/\$envProgramData/gi, 'C:\\ProgramData')
-                        .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
-                    
-                    extractedInfo.configMsiLogPath = `✅ MSI log path from AppDeployToolkitConfig.xml: ${msiLogPath}`;
-                }
-            }
-            
-            // Then check PowerShell scripts for specific log file names
-            data.scripts.forEach(s => {
-                if (s.logs && s.logs.length > 0) {
-                    let log = s.logs[0];
-                    
-                    // If log doesn't have full path, add default
-                    if (!log.includes('\\')) {
-                        // Use config path if available, otherwise default
-                        let basePath = 'C:\\ProgramData\\IntuneLogs';
-                        
-                        if (configPSD1) {
-                            const configPath = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
-                            if (configPath) {
-                                basePath = configPath[1]
-                                    .replace(/\$envWinDir/gi, 'C:\\Windows')
-                                    .replace(/\$envProgramData/gi, 'C:\\ProgramData');
-                            }
-                        } else if (configXML) {
-                            const xmlPath = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
-                            if (xmlPath) {
-                                basePath = xmlPath[1].trim()
-                                    .replace(/\$envWinDir/gi, 'C:\\Windows')
-                                    .replace(/\$envProgramData/gi, 'C:\\ProgramData');
-                            }
-                        }
-                        
-                        log = `${basePath}\\${log}`;
-                    }
-                    
-                    if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
-                        logPaths.install = log;
-                        extractedInfo.logInstall = `${log} (from ${s.name})`;
-                    } else if (s.name.toLowerCase().includes('uninstall')) {
-                        logPaths.uninstall = log;
-                        extractedInfo.logUninstall = `${log} (from ${s.name})`;
-                    }
-                }
-            });
+            extractedInfo.configLogPath = `✅ Log path from config.psd1: ${basePath}`;
         }
+        
+        if (logPathNoAdminMatch) {
+            const logPathNoAdmin = logPathNoAdminMatch[1]
+                .replace(/\$envWinDir/gi, 'C:\\Windows')
+                .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
+            
+            extractedInfo.configLogPathNoAdmin = `✅ Log path (no admin) from config.psd1: ${logPathNoAdmin}`;
+        }
+        
+        if (hierarchyMatch) {
+            logToHierarchy = hierarchyMatch[1].toLowerCase() === 'true';
+        }
+    }
+    
+    // Extract from PSADT v3 AppDeployToolkitConfig.xml
+    if (configXML) {
+        const logPathMatch = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
+        
+        if (logPathMatch) {
+            basePath = logPathMatch[1].trim()
+                .replace(/\$envWinDir/gi, 'C:\\Windows')
+                .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                .replace(/\$envSystemDrive/gi, 'C:')
+                .replace(/\$envTemp/gi, 'C:\\Windows\\Temp')
+                .replace(/%WINDIR%/gi, 'C:\\Windows')
+                .replace(/%PROGRAMDATA%/gi, 'C:\\ProgramData')
+                .replace(/%TEMP%/gi, 'C:\\Windows\\Temp');
+            
+            extractedInfo.configLogPath = `✅ Log path from AppDeployToolkitConfig.xml: ${basePath}`;
+        }
+        
+        const msiLogPathMatch = configXML.content.match(/<MSI_LogPath>([^<]+)<\/MSI_LogPath>/i);
+        if (msiLogPathMatch) {
+            let msiLogPath = msiLogPathMatch[1].trim()
+                .replace(/\$envWinDir/gi, 'C:\\Windows')
+                .replace(/\$envProgramData/gi, 'C:\\ProgramData')
+                .replace(/\$envTemp/gi, 'C:\\Windows\\Temp');
+            
+            extractedInfo.configMsiLogPath = `✅ MSI log path from AppDeployToolkitConfig.xml: ${msiLogPath}`;
+        }
+    }
+    
+    // Extract app variables for log naming
+    if (isPSADT) {
+        const deployScript = deployV3 || deployV4;
+        
+        if (isV4) {
+            // V4: Extract from $adtSession hashtable
+            const sessionMatch = deployScript.content.match(/\$adtSession\s*=\s*@\{([^}]+)\}/s);
+            if (sessionMatch) {
+                const sessionContent = sessionMatch[1];
+                
+                const vendorMatch = sessionContent.match(/AppVendor\s*=\s*['"]([^'"]+)['"]/i);
+                const nameMatch = sessionContent.match(/AppName\s*=\s*['"]([^'"]+)['"]/i);
+                const versionMatch = sessionContent.match(/AppVersion\s*=\s*['"]([^'"]+)['"]/i);
+                const langMatch = sessionContent.match(/AppLang\s*=\s*['"]([^'"]*)['"]/i);
+                const revMatch = sessionContent.match(/AppRevision\s*=\s*['"]([^'"]*)['"]/i);
+                const installNameMatch = sessionContent.match(/InstallName\s*=\s*['"]([^'"]*)['"]/i);
+                
+                if (vendorMatch) appVendor = vendorMatch[1].trim();
+                if (nameMatch) appName = nameMatch[1].trim();
+                if (versionMatch) appVersion = versionMatch[1].trim();
+                if (langMatch) appLang = langMatch[1].trim();
+                if (revMatch) appRevision = revMatch[1].trim();
+                if (installNameMatch) installName = installNameMatch[1].trim();
+            }
+        } else {
+            // V3: Extract from variables
+            const vendorMatch = deployScript.content.match(/\$appVendor\s*=\s*['"]([^'"]*)['"]/i);
+            const nameMatch = deployScript.content.match(/\$appName\s*=\s*['"]([^'"]+)['"]/i);
+            const versionMatch = deployScript.content.match(/\$appVersion\s*=\s*['"]([^'"]+)['"]/i);
+            const langMatch = deployScript.content.match(/\$appLang\s*=\s*['"]([^'"]*)['"]/i);
+            const revMatch = deployScript.content.match(/\$appRevision\s*=\s*['"]([^'"]*)['"]/i);
+            const installNameMatch = deployScript.content.match(/\$installName\s*=\s*['"]([^'"]*)['"]/i);
+            
+            if (vendorMatch) appVendor = vendorMatch[1].trim();
+            if (nameMatch) appName = nameMatch[1].trim();
+            if (versionMatch) appVersion = versionMatch[1].trim();
+            if (langMatch) appLang = langMatch[1].trim();
+            if (revMatch) appRevision = revMatch[1].trim();
+            if (installNameMatch) installName = installNameMatch[1].trim();
+        }
+        
+        // Build PSADT log file names
+        if (isV4 && logToHierarchy) {
+            // V4 Hierarchical: LogPath\Vendor\Name\Version\Install.log
+            let hierarchyPath = basePath;
+            if (appVendor) hierarchyPath += `\\${appVendor}`;
+            if (appName) hierarchyPath += `\\${appName}`;
+            if (appVersion) hierarchyPath += `\\${appVersion}`;
+            
+            logPaths.install = `${hierarchyPath}\\Install.log`;
+            logPaths.uninstall = `${hierarchyPath}\\Uninstall.log`;
+            extractedInfo.logInstall = `${logPaths.install} (PSADT v4 hierarchical)`;
+            extractedInfo.logUninstall = `${logPaths.uninstall} (PSADT v4 hierarchical)`;
+        } else {
+            // Standard naming: [InstallName or AppVendor_AppName_AppVersion]_PSAppDeployToolkit_Install.log
+            let logFileName = '';
+            
+            if (installName) {
+                // Use InstallName if set
+                logFileName = installName.replace(/\s+/g, '_');
+            } else {
+                // Build from app variables
+                let parts = [];
+                if (appVendor) parts.push(appVendor.replace(/\s+/g, '_'));
+                if (appName) parts.push(appName.replace(/\s+/g, '_'));
+                if (appVersion) parts.push(appVersion.replace(/\s+/g, '_'));
+                if (appLang) parts.push(appLang.replace(/\s+/g, '_'));
+                if (appRevision) parts.push(appRevision.replace(/\s+/g, '_'));
+                logFileName = parts.join('_');
+            }
+            
+            if (logFileName) {
+                logPaths.install = `${basePath}\\${logFileName}_PSAppDeployToolkit_Install.log`;
+                logPaths.uninstall = `${basePath}\\${logFileName}_PSAppDeployToolkit_Uninstall.log`;
+                
+                const source = installName ? 'from $installName' : 'from app variables';
+                extractedInfo.logInstall = `${logPaths.install} (PSADT ${source})`;
+                extractedInfo.logUninstall = `${logPaths.uninstall} (PSADT ${source})`;
+            }
+        }
+    }
+    
+    // Then check PowerShell scripts for specific log file names (overrides PSADT defaults)
+    data.scripts.forEach(s => {
+        if (s.logs && s.logs.length > 0) {
+            let log = s.logs[0];
+            
+            // If log doesn't have full path, add base path
+            if (!log.includes('\\')) {
+                log = `${basePath}\\${log}`;
+            }
+            
+            if (s.name.toLowerCase().includes('install') && !s.name.toLowerCase().includes('uninstall')) {
+                logPaths.install = log;
+                extractedInfo.logInstall = `${log} (from ${s.name})`;
+            } else if (s.name.toLowerCase().includes('uninstall')) {
+                logPaths.uninstall = log;
+                extractedInfo.logUninstall = `${log} (from ${s.name})`;
+            }
+        }
+    });
+}
 
         async function fetchAiDescription() {
             const appName = document.getElementById('name').value.trim();
@@ -1182,3 +1244,4 @@ ${document.getElementById('notes').value}
     </script>
 </body>
 </html>
+
