@@ -1,156 +1,261 @@
-# 📁 Intune Apps Documentation Generator
+# 📁 Free Intune Win32 App Documentation Generator
 
-**Automatically create documentation for your Intune app packages in seconds!**
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0-green.svg)](https://github.com/MrtnRQL/intune-doc-generator/releases)
+[![Free](https://img.shields.io/badge/price-free-brightgreen.svg)](https://mrtnrql.github.io/intune-doc-generator/)
+[![Privacy](https://img.shields.io/badge/privacy-100%25%20local-success.svg)](https://mrtnrql.github.io/intune-doc-generator/)
 
-No more manual documentation. Just select your package folder, and this tool does the rest.
+**Auto-generate professional documentation for Microsoft Intune Win32 app packages in seconds.** No more manual copy-paste. No upload required. 100% browser-based and private.
+
+🚀 **[Try it now →](https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html)**
+
+![Preview](/.github/assets/og-preview.png)
 
 ---
 
-## 🚀 How to Use
+## ✨ Features
 
-###
- Step 1: Open the Tool
+- ⚡ **Instant Documentation** - Generate complete package docs in seconds
+- 🔒 **100% Private** - All processing happens in your browser, nothing uploaded
+- 🤖 **AI-Powered Descriptions** - Auto-generate package descriptions (Beta)
+- 📦 **Multi-Format Support** - PSADT v3/v4, MSI, EXE, MSIX, PowerShell, Batch
+- 🌍 **Multilingual** - Norwegian and English support
+- 💾 **No Installation** - Works directly in your browser
+- 📋 **Copy & Paste** - One-click copy to clipboard
 
-Click here: 
-[Open Documentation Generator](https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html
+---
+
+## 🚀 Quick Start
+
+### Step 1: Open the Tool
+**[Click here to open the Documentation Generator →](https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html)**
 
 ### Step 2: Select Your Package Folder
-Click the **"Select Folder"** button and choose your Intune package folder (the one with your source files).
+Click **"Select Folder"** and choose your Intune Win32 app package folder.
 
-### Step 3: Review the Information
-The tool automatically finds:
-- Package name and version
+The tool automatically detects:
+- Package name and version (from PSADT scripts)
 - Installation commands
+- Uninstall commands
+- Detection methods
 - Log file paths
-- File types
 
-**Important:** Double-check the fields marked with ⚠️ (Type and Install Behavior)
+### Step 3: Review Auto-Filled Information
+**⚠️ Important:** Double-check these fields:
+- **Type** - Ensure correct package type (PSADT v4, v3, MSI, etc.)
+- **Install Behavior** - System vs User context
 
-### Step 4: Generate Documentation
-Click **"Show Documentation"** to see your formatted documentation.
+### Step 4: Generate & Copy
+1. Click **"Show Documentation"**
+2. Click **"Copy"** 
+3. Paste into your package folder or documentation system
 
-### Step 5: Copy and Save
-Click **"Copy"** and paste the documentation into your package folder or documentation system.
-
-**Done!** ✅
-
----
-
-## 🌍 Language
-
-- **Default language:** English
-- **Switch to Norwegian:** Click the **"Norsk"** button in the top-right corner
-- **Switch back to English:** Click the **"English"** button
+**✅ Done!** Your documentation is ready.
 
 ---
 
-## 📦 What Files Does It Support?
+## 📦 Supported Package Types
 
-The tool works with:
-- **PSADT packages** (Deploy-Application.ps1)
-- **MSI installers** (.msi files)
-- **EXE installers** (.exe files)
-- **PowerShell scripts** (.ps1 files)
-- **MSIX packages** (.msix files)
+| Package Type | File Extension | Auto-Detection |
+|-------------|----------------|----------------|
+| **PowerShell App Deployment Toolkit v4** | `.ps1` | ✅ Full |
+| **PowerShell App Deployment Toolkit v3** | `.ps1` | ✅ Full |
+| **MSI Installer** | `.msi` | ✅ Partial |
+| **EXE Installer** | `.exe` | ⚠️ Manual |
+| **MSIX Package** | `.msix` | ⚠️ Manual |
+| **PowerShell Script** | `.ps1` | ✅ Partial |
+| **Batch/CMD Script** | `.bat/.cmd` | ⚠️ Manual |
 
 ---
 
 ## 💡 Pro Tips
 
-### Tip 1: Let It Do the Work
-The tool automatically reads your `Deploy-Application.ps1` file and fills in:
-- Package name (from $appVendor and $appName)
-- Version (from $appVersion)
-- Install/Uninstall commands
-- Log file paths
-
-### Tip 2: Always Check "Install Behavior"
-This field is critical for Intune! Make sure it's set correctly:
-- **System** - Installs for all users (most common)
-- **User** - Installs per user
-
-### Tip 3: Choose the Right Detection Method
-- **Custom Script** - If you have a detection script
-- **File** - If you check for a specific file
-- **Registry** - If you check a registry key
-- **MSI** - If you use MSI product code
-
----
-
-## 🔒 Is My Data Safe?
-
-**Yes! 100% safe.**
-
-- ✅ Everything happens in your browser
-- ✅ No files are uploaded anywhere
-- ✅ No data is stored on any server
-- ✅ No personal information is collected
-
-When you close the page, everything is deleted.
-
----
-
-## 📋 Example: What You Get
-
-Here's what the documentation looks like:
-
+### 🎯 Tip 1: Let Auto-Detection Work for You
+For **PSADT packages**, the tool automatically reads:
+```powershell
+$appVendor = 'Adobe'
+$appName = 'Acrobat Reader DC'
+$appVersion = '24.1.20643'
 ```
-Name:  
-Adobe Acrobat Reader DC
+And fills in all the fields for you!
 
-Type:  
-Win32: PSADT
+### 🔐 Tip 2: Always Verify "Install Behavior"
+This is **critical** for Intune deployment:
+- **System** - Runs in SYSTEM context (most common)
+- **User** - Runs in user context
 
-Version:  
-24.1.0
+### 🔍 Tip 3: Choose the Right Detection Method
+- **Custom Script** - For advanced detection logic
+- **File** - Check if specific file exists
+- **Registry** - Check registry key/value
+- **MSI** - Use MSI product code
 
-Installation:  
+### 🤖 Tip 4: Try AI-Powered Descriptions (Beta)
+Click **"🤖 Let AI Help"** to auto-generate package descriptions based on your files.
+
+---
+
+## 🔒 Privacy & Security
+
+**Your data never leaves your computer.**
+
+- ✅ 100% client-side processing
+- ✅ No file uploads to any server
+- ✅ No data collection or tracking
+- ✅ No personal information stored
+- ✅ Works completely offline
+
+When you close the browser tab, everything is deleted.
+
+---
+
+## 📋 Example Output
+
+Here's what the generated documentation looks like:
+
+```markdown
+### Package Information
+
+**Name:** Adobe Acrobat Reader DC  
+**Type:** Win32: PSADT v4  
+**Version:** 24.1.20643  
+**Owner:** IT Department  
+**Install Behavior:** System  
+
+### Installation
+
+**Installation Command:**  
 Deploy-Application.exe -DeploymentType "Install" -DeployMode "NonInteractive"
 
-Uninstallation:  
-Deploy-Application.exe -DeploymentType "unInstall" -DeployMode "NonInteractive"
+**Uninstallation Command:**  
+Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "NonInteractive"
 
-Detection:  
-Custom Script
+### Detection Method
 
-Dependencies:  
+**Type:** Custom Script  
+**Detection Script:** Detect-AdobeReader.ps1
+
+### Logging
+
+**Installation Log:** C:\Windows\Logs\Software\AdobeReader_24.1_Install.log  
+**Uninstallation Log:** C:\Windows\Logs\Software\AdobeReader_24.1_Uninstall.log
+
+### Dependencies
+
 - Windows 10 22H2 or newer
+- .NET Framework 4.8
 
-Notes:  
+### Notes
+
+- Silent installation
 - No reboot required
+- Supports per-user installation
 ```
 
 ---
 
-## ❓ Common Questions
+## 🌍 Language Support
 
-### Q: Do I need to install anything?
-**A:** No! Just open the link in your browser. Works on Chrome, Edge, Firefox, and Safari.
+- **🇬🇧 English** - Default language
+- **🇳🇴 Norwegian** - Click "Norsk" button to switch
 
-### Q: Can I use this offline?
-**A:** Yes! Download the HTML file and open it locally. Everything works offline.
-
-### Q: What if the tool doesn't detect my package info?
-**A:** No problem! Just fill in the fields manually. The tool still saves you time with the template.
-
-### Q: Can I edit the documentation after generating it?
-**A:** Yes! Copy it to a text editor and modify as needed.
-
-### Q: Does this work on Mac?
-**A:** Yes! Works on any operating system with a modern web browser.
+Switch between languages anytime using the language selector in the top-right corner.
 
 ---
 
+## ❓ FAQ
 
+<details>
+<summary><strong>Do I need to install anything?</strong></summary>
 
+No! Just open the link in your browser. Works on Chrome, Edge, Firefox, and Safari.
+</details>
 
+<details>
+<summary><strong>Can I use this offline?</strong></summary>
+
+Yes! The tool works completely offline. Download the HTML file and open it locally.
+</details>
+
+<details>
+<summary><strong>What if auto-detection doesn't work?</strong></summary>
+
+No problem! Just fill in the fields manually. The tool still saves you time with the template and formatting.
+</details>
+
+<details>
+<summary><strong>Can I edit the documentation after generating it?</strong></summary>
+
+Yes! Copy it to any text editor (Notepad, VS Code, Word) and modify as needed.
+</details>
+
+<details>
+<summary><strong>Does this work on Mac/Linux?</strong></summary>
+
+Yes! Works on any operating system with a modern web browser.
+</details>
+
+<details>
+<summary><strong>Is my sensitive data safe?</strong></summary>
+
+Absolutely. Nothing is uploaded. Everything happens locally in your browser. Close the tab and it's all gone.
+</details>
+
+<details>
+<summary><strong>Can I use this for hundreds of packages?</strong></summary>
+
+Yes! Each package takes only seconds to document. Perfect for large-scale deployments.
+</details>
+
+---
+
+## 🛠️ Use Cases
+
+### For IT Administrators
+- Quick documentation for Intune app deployments
+- Standardized format across all packages
+- Easy handoff to team members
+
+### For MSPs (Managed Service Providers)
+- Client documentation in seconds
+- Consistent documentation across multiple tenants
+- Professional appearance for customer deliverables
+
+### For Consultants
+- Fast turnaround on implementation projects
+- Easy knowledge transfer
+- Audit-ready documentation
+
+---
+
+## 🎯 SEO Keywords
+
+Microsoft Intune, Win32 app documentation, PSADT documentation generator, Intune package documentation, PowerShell App Deployment Toolkit, Intune Win32, app packaging, deployment documentation, IT documentation tool, free Intune tool, Intune automation, endpoint management, documentation generator
+
+---
+
+## 📊 Statistics
+
+- 🚀 Generate docs in **under 30 seconds**
+- 📦 Supports **7+ package types**
+- 🌍 Available in **2 languages**
+- 💯 **100% free** and open source
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## 🎉 Credits
 
-Built for Intune admins who are tired of writing the same documentation over and over.
+Built with ❤️ for the Microsoft Intune community by **[Morten Glimme](https://github.com/MrtnRQL)**
 
-**"Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake."**
+> *"Code tells you how. Documentation tells you why. Your future self will thank you, and your colleagues will give you cake."*  
+> — Unknown IT Legend
 
 ---
 
-**Made with ❤️ for the Intune community by Morten Glimme**
+**⭐ If this tool saved you time, consider giving it a star on GitHub!**
