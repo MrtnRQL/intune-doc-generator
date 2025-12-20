@@ -9,7 +9,7 @@
 
 🚀 **[Try it now →](https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html)**
 
-![Preview](/.github/assets/og-preview.png)
+![Preview](/github/assets/og-preview.png)
 
 ---
 
