@@ -12,6 +12,16 @@
 ![Preview](/github/assets/og-preview.png)
 
 ---
+## 🎬 See It In Action
+
+<p align="center">
+  <img src="github/assets/IntuneHowto.gif" alt="Intune Documentation Generator Demo" width="800">
+</p>
+
+*Watch how easy it is to generate professional documentation in seconds!*
+
+---
+
 
 ## ✨ Features
 
