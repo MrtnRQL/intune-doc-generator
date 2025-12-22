@@ -3,74 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intune Documentation Generator</title>
     
-    <title>Free Intune Win32 App Documentation Generator | PSADT, MSI, EXE</title>
-    <meta name="description" content="Generate professional documentation for Microsoft Intune Win32 app packages instantly. Analyzes PSADT v3/v4, MSI, EXE files locally in your browser. 100% private, no upload required, AI-powered descriptions. Free and open source.">
-    <meta name="keywords" content="Intune documentation generator, PSADT documentation, Win32 app documentation, Intune package documentation, PowerShell App Deployment Toolkit, Intune Win32, Microsoft Intune, app packaging tool, IT documentation, MSI documentation, deployment documentation, free Intune tool">
-    <meta name="author" content="Morten Glimme">
-    <meta name="robots" content="index, follow">
+    <!-- Favicon - Custom Intune Doc Generator Icon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='grad1' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%234f46e5;stop-opacity:1'/><stop offset='100%' style='stop-color:%236366f1;stop-opacity:1'/></linearGradient></defs><rect fill='url(%23grad1)' width='64' height='64' rx='12'/><path fill='white' opacity='0.9' d='M16 20h32v4H16z'/><path fill='white' opacity='0.9' d='M16 28h32v3H16z'/><path fill='white' opacity='0.9' d='M16 34h24v3H16z'/><circle fill='%2310b981' cx='50' cy='50' r='8'/><path fill='white' d='M47 50l2 2 4-4' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html">
-    <meta property="og:site_name" content="Intune Documentation Generator">
-    <meta property="og:title" content="Free Intune Win32 App Documentation Generator">
-    <meta property="og:description" content="No more excuses not to document your Intune packages. Generate professional documentation instantly. 100% browser-based, private, and free.">
-    <meta property="og:image" content="https://mrtnrql.github.io/intune-doc-generator/github/assets/og-preview.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Intune Documentation Generator - No more excuses not to document">
-    <meta property="og:locale" content="en_US">
-    
-    <link rel="canonical" href="https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html">
-    <meta name="theme-color" content="#667eea">
-    
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Intune Documentation Generator",
-      "applicationCategory": "DeveloperApplication",
-      "applicationSubCategory": "Documentation Tool",
-      "operatingSystem": "Web Browser",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "description": "Generate professional documentation for Microsoft Intune Win32 app packages. Supports PSADT v3/v4, MSI, and EXE files. 100% browser-based with AI-powered descriptions.",
-      "softwareVersion": "1.0",
-      "url": "https://mrtnrql.github.io/intune-doc-generator/intune-doc-generator.html",
-      "screenshot": "https://mrtnrql.github.io/intune-doc-generator/github/assets/og-preview.png",
-      "author": {
-        "@type": "Person",
-        "name": "Morten Glimme",
-        "url": "https://github.com/MrtnRQL"
-      },
-      "featureList": [
-        "PSADT v4 support",
-        "PSADT v3 support", 
-        "MSI file analysis",
-        "EXE file analysis",
-        "100% client-side processing",
-        "No data upload required",
-        "AI-powered descriptions",
-        "Multilingual support (Norwegian/English)",
-        "Instant documentation generation",
-        "Free and open source"
-      ],
-      "softwareRequirements": "Modern web browser (Chrome, Edge, Firefox, Safari)",
-      "releaseNotes": "Initial release with PSADT v4 support and AI-powered descriptions"
-    }
-    </script>
-    
-    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
-    
+    <!-- GoatCounter Analytics (Privacy-friendly, no cookies) -->
     <script data-goatcounter="https://mrtnrql.goatcounter.com/count"
             async src="//gc.zgo.at/count.js"></script>
     
-    <!-- ============================================ -->
-    <!-- STYLES - 
-    <!-- ============================================ -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -1011,62 +952,73 @@
         }
 
         function generateAppNameVariants(appName) {
-            const variants = [];
+            const variants = new Set();  // Use Set to automatically handle duplicates
             
-            // Variant 1: Original name
-            variants.push(appName);
+            // Start with original
+            variants.add(appName);
             
-            // Variant 2: Remove version numbers only
-            const noVersion = appName.replace(/\d+(\.\d+)*/g, '').trim();
-            if (noVersion !== appName && noVersion.length > 0) {
-                variants.push(noVersion);
+            // Clean base: remove versions, arch, package types
+            let cleaned = appName
+                .replace(/\d+(\.\d+)*/g, '')  // Remove versions
+                .replace(/\s+(x86|x64|32-bit|64-bit|32bit|64bit)\s*/gi, '')  // Remove arch
+                .replace(/\s+(MSI|EXE|Installer|Setup)\s*$/i, '')  // Remove package types
+                .trim();
+            
+            if (cleaned && cleaned !== appName) {
+                variants.add(cleaned);
             }
             
-            // Variant 3: Remove version + common suffixes
-            const noSuffix = noVersion
+            // Remove suffixes (DC, CC, Pro, etc.)
+            const noSuffix = cleaned
                 .replace(/\s+(DC|CC|Pro|Professional|Enterprise|Standard|Premium|Ultimate|Express|Community|Free|Lite)\s*$/i, '')
                 .trim();
-            if (noSuffix !== noVersion && noSuffix.length > 0) {
-                variants.push(noSuffix);
+            if (noSuffix && noSuffix !== cleaned) {
+                variants.add(noSuffix);
             }
             
-            // Variant 4: Remove architecture indicators
-            const noArch = noSuffix
-                .replace(/\s+(x86|x64|32-bit|64-bit|32bit|64bit)\s*/gi, '')
+            // Remove descriptors (Desktop, Client, Application, etc.)
+            const noDescriptor = cleaned
+                .replace(/\s+(Desktop|Client|Application|App|Software|Suite|Tool|Tools|Manager|Agent|Service|Player)\s*$/i, '')
                 .trim();
-            if (noArch !== noSuffix && noArch.length > 0) {
-                variants.push(noArch);
+            if (noDescriptor && noDescriptor.length > 3) {
+                variants.add(noDescriptor);
             }
             
-            // Variant 5: Remove package type
-            const noPackageType = noArch
-                .replace(/\s+(MSI|EXE|Installer|Setup)\s*$/i, '')
-                .trim();
-            if (noPackageType !== noArch && noPackageType.length > 0) {
-                variants.push(noPackageType);
-            }
+            // Work with the most cleaned version
+            const base = noDescriptor || noSuffix || cleaned;
+            const words = base.split(/\s+/).filter(w => w.length > 0);
             
-            // Variant 6: Try removing first word (often vendor name)
-            // E.g., "Adobe Reader" -> "Reader"
-            const words = noPackageType.split(/\s+/);
-            if (words.length > 1) {
+            // Only generate word-removal variants if we have enough words
+            if (words.length >= 2) {
+                // Remove first word (vendor)
                 const withoutFirst = words.slice(1).join(' ');
-                if (withoutFirst.length > 3) {  // Avoid too short names
-                    variants.push(withoutFirst);
+                if (withoutFirst.length > 3) {
+                    variants.add(withoutFirst);
                 }
-            }
-            
-            // Variant 7: Try removing last word
-            // E.g., "Acrobat Reader DC" -> "Acrobat Reader"
-            if (words.length > 1) {
+                
+                // Remove last word
                 const withoutLast = words.slice(0, -1).join(' ');
-                if (withoutLast.length > 3 && !variants.includes(withoutLast)) {
-                    variants.push(withoutLast);
+                if (withoutLast.length > 3) {
+                    variants.add(withoutLast);
                 }
             }
             
-            // Remove duplicates while preserving order
-            return [...new Set(variants)];
+            if (words.length >= 3) {
+                // Remove BOTH first AND last word
+                const withoutFirstAndLast = words.slice(1, -1).join(' ');
+                if (withoutFirstAndLast.length > 3) {
+                    variants.add(withoutFirstAndLast);
+                }
+                
+                // Keep only first two words
+                const firstTwo = words.slice(0, 2).join(' ');
+                if (firstTwo.length > 3) {
+                    variants.add(firstTwo);
+                }
+            }
+            
+            // Convert Set back to Array, filter out empty/short strings
+            return Array.from(variants).filter(v => v && v.length > 3);
         }
 
         async function tryWikipedia(appName) {
@@ -1306,6 +1258,3 @@ ${document.getElementById('notes').value}
     </script>
 </body>
 </html>
-
-
-
