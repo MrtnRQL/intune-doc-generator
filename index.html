@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IntuneAppDoc - Auto-generate professional documentation for Microsoft Intune Win32 app packages">
+    <title>IntuneAppDoc.com - Documentation Generator</title>
+    
+    <link rel="icon" type="image/png" href="favicon.png">    
+    <script data-goatcounter="https://mrtnrql.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --info-bg: #eff6ff;
+            --info-border: #bfdbfe;
+            --warning-bg: #fefce8;
+            --warning-border: #fef08a;
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container { 
+            max-width: 75rem; 
+            margin: 0 auto; 
+            padding: 2rem 1.5rem;
+        }
+        
+        /* --- HEADER DESIGN (Glassmorphism) --- */
+        .header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+        
+        .header-content {
+            max-width: 75rem;
+            margin: 0 auto;
+            padding: 0.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 80px;
+        }
+        
+        .logo-section {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .logo-icon {
+            width: 180px;
+            height: 180px;
+            flex-shrink: 0;
+        }
+        
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .logo-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text);
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-title strong {
+            font-weight: 800;
+            color: var(--primary);
+        }
+        
+        /* Container for right side elements (Quote + Button) */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /* The Quote Style */
+        .header-quote {
+            font-size: 0.85rem;
+            color: #94a3b8; /* Lysetekst */
+            font-style: italic;
+            display: none; /* Skjult på mobil */
+            max-width: 400px;
+            text-align: right;
+            line-height: 1.3;
+        }
+        
+        @media (min-width: 900px) {
+            .header-quote { display: block; } /* Vis kun på større skjermer */
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* Upload */
+        .upload-card {
+            background: var(--surface);
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 4rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+            display: block;
+            width: 100%;
+        }
+        
+        .upload-card:hover {
+            border-color: var(--primary);
+            background: #f8fafc;
+            transform: translateY(-2px);
+        }
+        
+        .upload-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .upload-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+        
+        /* Info Cards */
+        .info-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-card {
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .info-card-blue {
+            background: var(--surface);
+            border-color: var(--info-border);
+            border-top: 4px solid var(--primary);
+        }
+        
+        .info-card-yellow {
+            background: var(--surface);
+            border-color: var(--warning-border);
+            border-top: 4px solid #eab308;
+        }
+        
+        .info-card-header { margin-bottom: 0.5rem; }
+        
+        .info-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .info-card-text {
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .info-card-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.75rem 0 0 0;
+        }
+        
+        .info-card-list li {
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+        
+        .info-card-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        
+        /* Auto-detected Info Box */
+        .auto-info-box {
+            background: linear-gradient(to right, #fefce8, #fffbeb);
+            border: 1px solid #fef08a;
+            border-left: 4px solid #eab308;
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .auto-info-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            color: #854d0e;
+        }
+        
+        .auto-info-icon { font-size: 1.25rem; }
+        
+        .auto-info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .auto-info-list li {
+            padding: 0.25rem 0;
+            padding-left: 1.75rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: #713f12;
+            line-height: 1.5;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .auto-info-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #16a34a;
+            font-weight: 700;
+        }
+        
+        /* Form */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* --- AI MAGIC BUTTON --- */
+        .btn-ai {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); /* Indigo til Lilla gradient */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .btn-ai:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-ai:disabled {
+            opacity: 0.7;
+            cursor: wait;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-ai svg {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-ai:hover svg {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        /* Preview */
+        .preview-content {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-height: 600px;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border: 1px solid #334155;
+        }
+        
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem 0;
+            margin-top: 4rem;
+            text-align: center;
+        }
+        
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .footer-link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        
+        /* Utility */
+        .hidden { display: none !important; }
+        input[type="file"] { display: none; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .header-right { width: 100%; justify-content: space-between; flex-direction: column-reverse; align-items: flex-start; gap: 0.5rem; }
+            .header-quote { text-align: left; margin-bottom: 0.5rem; display: block; } /* Show quote on mobile? Maybe keep hidden or style differently. Keeping as display:none from main css for cleanliness */
+            .header-actions { width: 100%; justify-content: flex-start; }
+            .info-cards { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-row { grid-template-columns: 1fr; }
+            .btn-actions { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <a href="#" onclick="window.location.reload()" class="logo-section">
+                <div class="logo-icon">
+                    <img src="github/assets/IntuneApp_LogoBig.png" alt="IntuneAppDoc Logo">
+                </div>
+            </a>
+
+            <div class="header-right">
+                <div class="header-quote">
+                    Auto-generate professional documentation for<br>Microsoft Intune Win32 app packages
+                </div>
+
+                <div class="header-actions">
+                    <a href="https://github.com/MrtnRQL/intune-doc-generator" target="_blank" class="btn-ghost">
+                        GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="container">
+        <div id="initialView">
+            <label class="upload-card">
+                <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #3b82f6; margin: 0 auto 1rem;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+                <div class="upload-title">Select Folder</div>
+                <div class="upload-subtitle">Click or drag and drop folder with source files here</div>
+                <input type="file" id="folderInput" webkitdirectory directory multiple>
+            </label>
+            
+            <div class="info-cards">
+                <div class="info-card info-card-blue">
+                    <div class="info-card-header">
+                        <div class="info-card-title">Privacy</div>
+                    </div>
+                    <div class="info-card-text">
+                        All files are processed only in your browser. Nothing is uploaded to servers. Everything happens locally on your PC and is deleted when you close the page.
+                    </div>
+                </div>
+                
+                <div class="info-card info-card-yellow">
+                    <div class="info-card-header">
+                        <div class="info-card-title">How to Use</div>
+                    </div>
+                    <ul class="info-card-list">
+                        <li>Select folder with source files (PS1, EXE, MSI, etc.)</li>
+                        <li>Double-check auto-filled information (especially Type and Install Behavior)</li>
+                        <li>Click 'Show Documentation' to see the result</li>
+                        <li>Copy the documentation and include it with your package</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div id="contentArea" class="hidden">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Files</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statScripts">0</div>
+                    <div class="stat-label">Scripts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statInstallers">0</div>
+                    <div class="stat-label">Installers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statConfigs">0</div>
+                    <div class="stat-label">Config Files</div>
+                </div>
+            </div>
+            
+            <div class="auto-info-box">
+                <div class="auto-info-header">
+                    <span class="auto-info-icon">⚡</span>
+                    <strong>Automatically extracted information:</strong>
+                </div>
+                <ul class="auto-info-list" id="autoInfoList">
+                    <li>Waiting for detection...</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text);">Package Information</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Name</label>
+                        <input type="text" id="name" class="form-input" placeholder="Application Name">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="type">Type ⚠️</label>
+                            <select id="type" class="form-select">
+                                <option value="Win32: PSADT v4">Win32: PSADT v4</option>
+                                <option value="Win32: PSADT v3">Win32: PSADT v3</option>
+                                <option value="Win32: MSI">Win32: MSI</option>
+                                <option value="Win32: EXE">Win32: EXE</option>
+                                <option value="Win32: PowerShell">Win32: PowerShell</option>
+                                <option value="Win32: Batch">Win32: Batch</option>
+                                <option value="MSIX">MSIX</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="version">Version</label>
+                            <input type="text" id="version" class="form-input" placeholder="1.0.0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="owner">Owner</label>
+                            <input type="text" id="owner" class="form-input" placeholder="IT Department">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="behavior">Install Behavior ⚠️</label>
+                            <select id="behavior" class="form-select">
+                                <option value="System">System</option>
+                                <option value="User">User</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" class="form-textarea" placeholder="Brief description of the application"></textarea>
+                        
+                        <button type="button" id="btnAiDesc" onclick="fetchAiDescription()" class="btn btn-ai">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                            </svg>
+                            <span id="btnAiText">Generate Description with AI (Beta)</span>
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="installCmd">Installation Command</label>
+                        <input type="text" id="installCmd" class="form-input" placeholder="Deploy-Application.exe Install">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="uninstallCmd">Uninstallation Command</label>
+                        <input type="text" id="uninstallCmd" class="form-input" placeholder="Deploy-Application.exe Uninstall">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="detectionType">Detection Type</label>
+                            <select id="detectionType" class="form-select">
+                                <option value="Custom Script">Custom Script</option>
+                                <option value="File">File</option>
+                                <option value="Registry">Registry</option>
+                                <option value="MSI">MSI</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="detectionDetails">Detection Details</label>
+                            <input type="text" id="detectionDetails" class="form-input" placeholder="Detect-Application.ps1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="logInstall">Log Path - Installation</label>
+                        <input type="text" id="logInstall" class="form-input" placeholder="C:\Windows\Logs\Software\App_Install.log">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="logUninstall">Log Path - Uninstallation</label>
+                        <input type="text" id="logUninstall" class="form-input" placeholder="C:\Windows\Logs\Software\App_Uninstall.log">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="dependencies">Dependencies</label>
+                        <textarea id="dependencies" class="form-textarea" placeholder="- Windows 10 22H2 or newer"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="notes">Notes</label>
+                        <textarea id="notes" class="form-textarea" placeholder="Additional information"></textarea>
+                    </div>
+                </div>
+                
+                <div class="btn-actions">
+                    <button class="btn btn-primary" onclick="showDoc()">Show Documentation</button>
+                </div>
+            </div>
+            
+            <div id="previewSection" class="hidden">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700;">Documentation Preview</h2>
+                        <button class="btn btn-success" onclick="copyDoc()">Copy to Clipboard</button>
+                    </div>
+                    <div id="previewContent" class="preview-content"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-text">
+                📖 Need help? Read the documentation
+            </div>
+            <div class="footer-links">
+                <a href="https://intuneappdoc.com" class="footer-link" target="_blank" rel="noopener noreferrer">IntuneAppDoc.com</a>
+                <a href="https://companyportalicons.com" class="footer-link" target="_blank" rel="noopener noreferrer">Company Portal Icons</a>
+                <a href="https://github.com/MrtnRQL/intune-doc-generator" class="footer-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+// IntuneAppDoc.com - Documentation Generator
+// https://github.com/MrtnRQL/intune-doc-generator
+
+let data = {
+    files: [],
+    scripts: [],
+    installers: [],
+    configs: []
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('folderInput').addEventListener('change', handleFolderSelection);
+});
+
+async function handleFolderSelection(e) {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    await processFiles(files);
+    document.getElementById('initialView').classList.add('hidden');
+    document.getElementById('contentArea').classList.remove('hidden');
+    await autoDetect();
+}
+
+async function processFiles(files) {
+    data.files = [];
+    data.scripts = [];
+    data.installers = [];
+    data.configs = [];
+    
+    for (const file of files) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const fileData = {
+            name: file.name,
+            path: file.webkitRelativePath || file.name,
+            size: file.size,
+            type: file.type,
+            ext: ext,
+            file: file
+        };
+        
+        if (['ps1', 'bat', 'cmd', 'xml', 'json', 'psd1', 'txt'].includes(ext)) {
+            fileData.content = await readFileContent(file);
+        }
+        
+        data.files.push(fileData);
+        
+        if (['ps1', 'bat', 'cmd'].includes(ext)) {
+            data.scripts.push(fileData);
+        } else if (['msi', 'exe', 'msix'].includes(ext)) {
+            data.installers.push(fileData);
+        } else if (['xml', 'json', 'psd1', 'txt', 'config'].includes(ext)) {
+            data.configs.push(fileData);
+        }
+    }
+    
+    document.getElementById('statTotal').textContent = data.files.length;
+    document.getElementById('statScripts').textContent = data.scripts.length;
+    document.getElementById('statInstallers').textContent = data.installers.length;
+    document.getElementById('statConfigs').textContent = data.configs.length;
+}
+
+function readFileContent(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsText(file);
+    });
+}
+
+async function autoDetect() {
+    const deployV4 = data.scripts.find(s => s.name.toLowerCase() === 'invoke-appdeploytoolkit.ps1');
+    const deployV3 = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
+    
+    let detectedType = 'Win32: EXE';
+    let name = '';
+    let version = '';
+    let installCmd = '';
+    let uninstallCmd = '';
+    
+    if (deployV4) {
+        detectedType = 'Win32: PSADT v4';
+        
+        const adtMatch = deployV4.content.match(/\$adtSession\s*=\s*@{([^}]+)}/s);
+        if (adtMatch) {
+            const sessionContent = adtMatch[1];
+            
+            const vendorMatch = sessionContent.match(/AppVendor\s*=\s*['"]([^'"]+)['"]/i);
+            const nameMatch = sessionContent.match(/AppName\s*=\s*['"]([^'"]+)['"]/i);
+            const versionMatch = sessionContent.match(/AppVersion\s*=\s*['"]([^'"]+)['"]/i);
+            
+            if (vendorMatch && nameMatch) {
+                name = `${vendorMatch[1]} ${nameMatch[1]}`;
+            } else if (nameMatch) {
+                name = nameMatch[1];
+            } else if (vendorMatch) {
+                name = vendorMatch[1];
+            }
+            
+            if (versionMatch) {
+                version = versionMatch[1];
+            }
+        }
+        
+        installCmd = 'Invoke-AppDeployToolkit.ps1 -DeploymentType "Install" -DeployMode "Silent"';
+        uninstallCmd = 'Invoke-AppDeployToolkit.ps1 -DeploymentType "Uninstall" -DeployMode "Silent"';
+        
+    } else if (deployV3) {
+        detectedType = 'Win32: PSADT v3';
+        
+        const vendorMatch = deployV3.content.match(/\$[Aa]ppVendor\s*=\s*['"]([^'"]*)['"]/);
+        const nameMatch = deployV3.content.match(/\$[Aa]ppName\s*=\s*['"]([^'"]+)['"]/);
+        const versionMatch = deployV3.content.match(/\$[Aa]ppVersion\s*=\s*['"]([^'"]+)['"]/);
+        
+        if (vendorMatch && nameMatch) {
+            const vendor = vendorMatch[1].trim();
+            const appNameValue = nameMatch[1].trim();
+            
+            if (vendor && appNameValue) {
+                name = `${vendor} ${appNameValue}`;
+            } else if (appNameValue) {
+                name = appNameValue;
+            } else if (vendor) {
+                name = vendor;
+            }
+        } else if (nameMatch) {
+            name = nameMatch[1];
+        }
+        
+        if (versionMatch) {
+            version = versionMatch[1];
+        }
+        
+        installCmd = 'Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"';
+        uninstallCmd = 'Deploy-Application.exe -DeploymentType "Uninstall" -DeployMode "Silent"';
+        
+    } else if (data.installers.length > 0) {
+        const installer = data.installers[0];
+        name = installer.name.replace(/\.[^.]+$/, '');
+        
+        if (installer.ext === 'msi') {
+            detectedType = 'Win32: MSI';
+            installCmd = `msiexec /i "${installer.name}" /qn`;
+            uninstallCmd = 'msiexec /x {PRODUCT-CODE} /qn';
+        } else if (installer.ext === 'exe') {
+            detectedType = 'Win32: EXE';
+            installCmd = `"${installer.name}" /S`;
+            uninstallCmd = `"${installer.name}" /S /U`;
+        } else if (installer.ext === 'msix') {
+            detectedType = 'MSIX';
+        }
+    }
+    
+    extractLogPaths();
+    
+    document.getElementById('name').value = name;
+    document.getElementById('type').value = detectedType;
+    document.getElementById('version').value = version;
+    document.getElementById('installCmd').value = installCmd;
+    document.getElementById('uninstallCmd').value = uninstallCmd;
+    document.getElementById('owner').value = 'IT Department';
+    document.getElementById('behavior').value = 'System';
+    document.getElementById('detectionType').value = 'Custom Script';
+    document.getElementById('detectionDetails').value = 'Detect-Application.ps1';
+    
+    updateAutoInfoBox({
+        name: name,
+        type: detectedType,
+        version: version,
+        installCmd: installCmd,
+        uninstallCmd: uninstallCmd
+    });
+}
+
+function updateAutoInfoBox(info) {
+    const items = [];
+    
+    if (info.name) {
+        items.push(`<strong>Package Name:</strong> "${info.name}" found (v${info.version || 'N/A'})`);
+    }
+    
+    if (info.type) {
+        items.push(`<strong>Type:</strong> ${info.type.replace('Win32: ', '')} ${info.type.includes('PSADT') ? 'detected' : 'format'} (x${data.scripts.length} scripts)`);
+    }
+    
+    if (info.installCmd) {
+        items.push(`<strong>Install command:</strong> generated from ${info.type.includes('PSADT v4') ? 'Invoke-AppDeployToolkit.ps1' : info.type.includes('PSADT v3') ? 'Deploy-Application.ps1' : 'installer'}`);
+    }
+    
+    const logInstall = document.getElementById('logInstall').value;
+    const logUninstall = document.getElementById('logUninstall').value;
+    if (logInstall || logUninstall) {
+        items.push(`<strong>Log paths:</strong> from ${info.type.includes('v4') ? 'Config.psd1' : 'AppDeployToolkitConfig.xml'} (${logInstall ? 'Install' : ''}${logInstall && logUninstall ? ' + ' : ''}${logUninstall ? 'Uninstall' : ''} logs found)`);
+    }
+    
+    if (items.length === 0) {
+        items.push('No automatic detection available for this package type');
+    }
+    
+    const listHtml = items.map(item => `<li>${item}</li>`).join('');
+    document.getElementById('autoInfoList').innerHTML = listHtml;
+}
+
+function extractLogPaths() {
+    const configPSD1 = data.configs.find(c => c.name.toLowerCase() === 'config.psd1' && c.content);
+    const configXML = data.configs.find(c => c.name.toLowerCase() === 'appdeploytoolkitconfig.xml' && c.content);
+    const deployV3 = data.scripts.find(s => s.name.toLowerCase() === 'deploy-application.ps1');
+    const deployV4 = data.scripts.find(s => s.name.toLowerCase() === 'invoke-appdeploytoolkit.ps1');
+    
+    const isPSADT = deployV3 || deployV4;
+    const isV4 = deployV4 ? true : false;
+    
+    let basePath = 'C:\\Windows\\Logs\\Software';
+    let logToHierarchy = false;
+    let installLogName = 'Install.log';
+    let uninstallLogName = 'Uninstall.log';
+    
+    let appVendor = '';
+    let appName = '';
+    let appVersion = '';
+    let appLang = '';
+    let appRevision = '';
+    let installName = '';
+    
+    if (isV4 && configPSD1) {
+        const logPathMatch = configPSD1.content.match(/LogPath\s*=\s*['"]([^'"]+)['"]/i);
+        if (logPathMatch) {
+            basePath = logPathMatch[1];
+        }
+        
+        const hierarchyMatch = configPSD1.content.match(/LogToHierarchy\s*=\s*\$?(true|false)/i);
+        if (hierarchyMatch) {
+            logToHierarchy = hierarchyMatch[1].toLowerCase() === 'true';
+        }
+    } else if (!isV4 && configXML) {
+        const logPathMatch = configXML.content.match(/<Toolkit_LogPath>([^<]+)<\/Toolkit_LogPath>/i);
+        if (logPathMatch) {
+            basePath = logPathMatch[1];
+        }
+    }
+    
+    if (isV4 && deployV4) {
+        const adtMatch = deployV4.content.match(/\$adtSession\s*=\s*@{([^}]+)}/s);
+        if (adtMatch) {
+            const sessionContent = adtMatch[1];
+            
+            const vM = sessionContent.match(/AppVendor\s*=\s*['"]([^'"]*)['"]/i);
+            const nM = sessionContent.match(/AppName\s*=\s*['"]([^'"]+)['"]/i);
+            const verM = sessionContent.match(/AppVersion\s*=\s*['"]([^'"]+)['"]/i);
+            const lM = sessionContent.match(/AppLang\s*=\s*['"]([^'"]*)['"]/i);
+            const rM = sessionContent.match(/AppRevision\s*=\s*['"]([^'"]*)['"]/i);
+            const iM = sessionContent.match(/InstallName\s*=\s*['"]([^'"]*)['"]/i);
+            
+            if (vM) appVendor = vM[1];
+            if (nM) appName = nM[1];
+            if (verM) appVersion = verM[1];
+            if (lM) appLang = lM[1];
+            if (rM) appRevision = rM[1];
+            if (iM) installName = iM[1];
+        }
+    } else if (!isV4 && deployV3) {
+        const vM = deployV3.content.match(/\$[Aa]ppVendor\s*=\s*['"]([^'"]*)['"]/);
+        const nM = deployV3.content.match(/\$[Aa]ppName\s*=\s*['"]([^'"]+)['"]/);
+        const verM = deployV3.content.match(/\$[Aa]ppVersion\s*=\s*['"]([^'"]+)['"]/);
+        const lM = deployV3.content.match(/\$[Aa]ppLang\s*=\s*['"]([^'"]*)['"]/);
+        const rM = deployV3.content.match(/\$[Aa]ppRevision\s*=\s*['"]([^'"]*)['"]/);
+        const iM = deployV3.content.match(/\$[Ii]nstallName\s*=\s*['"]([^'"]*)['"]/);
+        
+        if (vM) appVendor = vM[1];
+        if (nM) appName = nM[1];
+        if (verM) appVersion = verM[1];
+        if (lM) appLang = lM[1];
+        if (rM) appRevision = rM[1];
+        if (iM) installName = iM[1];
+    }
+    
+    let installLog = '';
+    let uninstallLog = '';
+    
+    if (isPSADT) {
+        if (isV4 && logToHierarchy) {
+            const vendorPath = appVendor.replace(/\s+/g, '_');
+            const namePath = appName.replace(/\s+/g, '_');
+            const versionPath = appVersion.replace(/\s+/g, '_');
+            
+            installLog = `${basePath}\\${vendorPath}\\${namePath}\\${versionPath}\\${installLogName}`;
+            uninstallLog = `${basePath}\\${vendorPath}\\${namePath}\\${versionPath}\\${uninstallLogName}`;
+        } else {
+            const parts = [];
+            if (appVendor) parts.push(appVendor.replace(/\s+/g, '_'));
+            if (appName) parts.push(appName.replace(/\s+/g, '_'));
+            if (appVersion) parts.push(appVersion.replace(/\s+/g, '_'));
+            if (appLang) parts.push(appLang.replace(/\s+/g, '_'));
+            if (appRevision) parts.push(appRevision.replace(/\s+/g, '_'));
+            
+            const baseName = parts.join('_');
+            
+            if (installName) {
+                installLog = `${basePath}\\${installName}_PSAppDeployToolkit_Install.log`;
+                uninstallLog = `${basePath}\\${installName}_PSAppDeployToolkit_Uninstall.log`;
+            } else if (baseName) {
+                installLog = `${basePath}\\${baseName}_PSAppDeployToolkit_Install.log`;
+                uninstallLog = `${basePath}\\${baseName}_PSAppDeployToolkit_Uninstall.log`;
+            }
+        }
+    }
+    
+    if (installLog) document.getElementById('logInstall').value = installLog;
+    if (uninstallLog) document.getElementById('logUninstall').value = uninstallLog;
+}
+
+async function fetchAiDescription() {
+    const appName = document.getElementById('name').value.trim();
+    if (!appName) {
+        alert('Please fill in application name first.');
+        return;
+    }
+    
+    const btn = document.getElementById('btnAiDesc');
+    const originalContent = btn.innerHTML; // Lagre hele knappen (ikon + tekst)
+    
+    // Sett laste-modus
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Searching...';
+    
+    try {
+        const variants = generateAppNameVariants(appName);
+        
+        let description = null;
+        let source = null;
+        
+        for (let i = 0; i < variants.length; i++) {
+            description = await tryWikipedia(variants[i]);
+            if (description) {
+                source = 'Wikipedia';
+                break;
+            }
+            
+            description = await tryDuckDuckGo(variants[i]);
+            if (description) {
+                source = 'DuckDuckGo';
+                break;
+            }
+        }
+        
+        if (description) {
+            document.getElementById('description').value = description;
+            btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Found (${source})`;
+            btn.classList.replace('btn-ai', 'btn-success'); // Bytt til grønn farge midlertidig
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.classList.replace('btn-success', 'btn-ai'); // Bytt tilbake
+                btn.disabled = false;
+            }, 3000);
+        } else {
+            btn.innerHTML = '❌ Not found';
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }, 2000);
+            alert(`No description found after ${variants.length} attempts.\n\nTried:\n- ${variants.join('\n- ')}\n\nTip: Try using the official product name without version numbers.`);
+        }
+    } catch (error) {
+        console.error('AI Description Error:', error);
+        btn.innerHTML = '❌ Error';
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+
+function generateAppNameVariants(appName) {
+    const variants = new Set();
+    variants.add(appName);
+    
+    let cleaned = appName
+        .replace(/\d+(\.\d+)*/g, '')
+        .replace(/\s+(x86|x64|32-bit|64-bit)\s*/gi, '')
+        .replace(/\s+(MSI|EXE|Installer|Setup)\s*$/i, '')
+        .trim();
+    
+    if (cleaned && cleaned !== appName) variants.add(cleaned);
+    
+    const noSuffix = cleaned.replace(/\s+(Pro|Professional|Enterprise|Standard)\s*$/i, '').trim();
+    if (noSuffix && noSuffix !== cleaned) variants.add(noSuffix);
+    
+    const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+    if (words.length >= 2) {
+        variants.add(words.slice(1).join(' '));
+        variants.add(words.slice(0, -1).join(' '));
+    }
+    
+    return Array.from(variants).filter(v => v && v.length > 3);
+}
+
+async function tryWikipedia(query) {
+    try {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.extract && data.extract.length > 50) return data.extract;
+        }
+    } catch (e) {}
+    return null;
+}
+
+async function tryDuckDuckGo(query) {
+    try {
+        const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`;
+        const response = await fetch(url);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.Abstract && data.Abstract.length > 50) return data.Abstract;
+        }
+    } catch (e) {}
+    return null;
+}
+
+function showDoc() {
+    const doc = `### Package Information
+
+**Name:** ${document.getElementById('name').value || 'N/A'}  
+**Type:** ${document.getElementById('type').value}  
+**Version:** ${document.getElementById('version').value || 'N/A'}  
+**Owner:** ${document.getElementById('owner').value || 'N/A'}  
+**Install Behavior:** ${document.getElementById('behavior').value}  
+
+${document.getElementById('description').value ? `**Description:**\n${document.getElementById('description').value}\n\n` : ''}### Installation
+
+**Installation Command:** \`${document.getElementById('installCmd').value || 'N/A'}\`
+
+**Uninstallation Command:** \`${document.getElementById('uninstallCmd').value || 'N/A'}\`
+
+### Detection
+
+**Type:** ${document.getElementById('detectionType').value}  
+**Details:** ${document.getElementById('detectionDetails').value || 'N/A'}
+
+### Logging
+
+**Installation Log:** ${document.getElementById('logInstall').value || 'N/A'}  
+**Uninstallation Log:** ${document.getElementById('logUninstall').value || 'N/A'}
+
+${document.getElementById('dependencies').value ? `### Dependencies\n\n${document.getElementById('dependencies').value}\n\n` : ''}${document.getElementById('notes').value ? `### Notes\n\n${document.getElementById('notes').value}` : ''}`;
+    
+    document.getElementById('previewContent').textContent = doc;
+    document.getElementById('previewSection').classList.remove('hidden');
+    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyDoc() {
+    const content = document.getElementById('previewContent').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+    }).catch(() => {
+        alert('Could not copy to clipboard');
+    });
+}
+    </script>
+</body>
+</html>
